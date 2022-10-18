@@ -49,7 +49,10 @@ class CallBack(object):
         """
         call function
         """
-        if isinstance(data, carla.Image):
+        is_sem = True if self._tag.split('_')[-1] == 'sem' else False 
+        if is_sem:
+            self._parse_image_sem_cb(data, self._tag)
+        elif isinstance(data, carla.Image):
             self._parse_image_cb(data, self._tag)
         elif isinstance(data, carla.LidarMeasurement):
             self._parse_lidar_cb(data, self._tag)
@@ -63,6 +66,16 @@ class CallBack(object):
             logging.error('No callback method for this sensor.')
 
     # Parsing CARLA physical Sensors
+    def _parse_image_sem_cb(self, image, tag):
+        """
+        parses cameras
+        """
+        image.convert(carla.ColorConverter.CityScapesPalette)
+        array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
+        array = copy.deepcopy(array)
+        array = np.reshape(array, (image.height, image.width, 4))
+        self._data_provider.update_sensor(tag, array, image.frame)
+
     def _parse_image_cb(self, image, tag):
         """
         parses cameras

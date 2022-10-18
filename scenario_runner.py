@@ -61,7 +61,7 @@ class ScenarioRunner(object):
     # Tunable parameters
     client_timeout = 10.0  # in seconds
     wait_for_world = 20.0  # in seconds
-    frame_rate = 20.0      # in Hz
+    frame_rate = 10.0      # in Hz
 
     # CARLA world and scenario handlers
     world = None
@@ -586,7 +586,7 @@ def main():
         parser.print_help(sys.stdout)
         return 1
 
-    if arguments.agent and (arguments.openscenario or arguments.scenario):
+    if arguments.agent and arguments.openscenario: #(arguments.openscenario or arguments.scenario):
         print("Agents are currently only compatible with route scenarios'\n\n")
         parser.print_help(sys.stdout)
         return 1

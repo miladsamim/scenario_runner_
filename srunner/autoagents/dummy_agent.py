@@ -45,15 +45,16 @@ class DummyAgent(AutonomousAgent):
         """
         sensors = [{'type': 'sensor.camera.rgb', 'x': 0.7, 'y': 0.0, 'z': 1.60, 'roll': 0.0, 'pitch': 0.0, 'yaw': 0.0,
                     'width': 800, 'height': 600, 'fov': 100, 'id': 'Center'},
-                   {'type': 'sensor.camera.rgb', 'x': 0.7, 'y': -0.4, 'z': 1.60, 'roll': 0.0, 'pitch': 0.0,
-                    'yaw': -45.0, 'width': 800, 'height': 600, 'fov': 100, 'id': 'Left'},
-                   {'type': 'sensor.camera.rgb', 'x': 0.7, 'y': 0.4, 'z': 1.60, 'roll': 0.0, 'pitch': 0.0, 'yaw': 45.0,
-                    'width': 800, 'height': 600, 'fov': 100, 'id': 'Right'},
-                   {'type': 'sensor.lidar.ray_cast', 'x': 0.7, 'y': -0.4, 'z': 1.60, 'roll': 0.0, 'pitch': 0.0,
-                    'yaw': -45.0, 'id': 'LIDAR'},
+                #    {'type': 'sensor.camera.rgb', 'x': 0.7, 'y': -0.4, 'z': 1.60, 'roll': 0.0, 'pitch': 0.0,
+                #     'yaw': -45.0, 'width': 800, 'height': 600, 'fov': 100, 'id': 'Left'},
+                #    {'type': 'sensor.camera.rgb', 'x': 0.7, 'y': 0.4, 'z': 1.60, 'roll': 0.0, 'pitch': 0.0, 'yaw': 45.0,
+                #     'width': 800, 'height': 600, 'fov': 100, 'id': 'Right'},
+                #    {'type': 'sensor.lidar.ray_cast', 'x': 0.7, 'y': -0.4, 'z': 1.60, 'roll': 0.0, 'pitch': 0.0,
+                #     'yaw': -45.0, 'id': 'LIDAR', 'range':10, 'rotation_frequency':10, 'channels':32, 'upper_fov': 10, 
+                #     'lower_fov':-30, 'points_per_second': 56000},
                    {'type': 'sensor.other.gnss', 'x': 0.7, 'y': -0.4, 'z': 1.60, 'id': 'GPS'},
-                   {'type': 'sensor.can_bus', 'reading_frequency': 25, 'id': 'can_bus'},
-                   {'type': 'sensor.hd_map', 'reading_frequency': 1, 'id': 'hdmap'},
+                #    {'type': 'sensor.can_bus', 'reading_frequency': 25, 'id': 'can_bus'},
+                #    {'type': 'sensor.hd_map', 'reading_frequency': 1, 'id': 'hdmap'},
                    ]
 
         return sensors
@@ -62,14 +63,14 @@ class DummyAgent(AutonomousAgent):
         """
         Execute one step of navigation.
         """
-        print("=====================>")
-        for key, val in input_data.items():
-            if hasattr(val[1], 'shape'):
-                shape = val[1].shape
-                print("[{} -- {:06d}] with shape {}".format(key, val[0], shape))
-            else:
-                print("[{} -- {:06d}] ".format(key, val[0]))
-        print("<=====================")
+        # print("=====================>")
+        # for key, val in input_data.items():
+        #     if hasattr(val[1], 'shape'):
+        #         shape = val[1].shape
+        #         print("[{} -- {:06d}] with shape {}".format(key, val[0], shape))
+        #     else:
+        #         print("[{} -- {:06d}] ".format(key, val[0]))
+        # print("<=====================")
 
         # DO SOMETHING SMART
 

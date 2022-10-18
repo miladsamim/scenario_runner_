@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<scenarios>
+    <scenario name="StraightDriving_1" type="StraightDriving" town="Town01">
+        <ego_vehicle x="107" y="133" z="0.5" yaw="0" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+        <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+    </scenario>
+    <scenario name="StraightDriving_2" type="StraightDriving" town="Town01">
+        <ego_vehicle x="110" y="330.7" z="0.5" yaw="0" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+        <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+    </scenario>
+    <scenario name="StraightDriving_3" type="StraightDriving" town="Town03">
+        <ego_vehicle x="246" y="-20" z="0.5" yaw="-90" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+        <weather cloudiness="0.1" precipitation="0" precipitation_deposits="0" wind_intensity="0.1" sun_azimuth_angle="0" sun_altitude_angle="80" />
+    </scenario>
+    <scenario name="StraightDriving_4" type="StraightDriving" town="Town03">
+        <ego_vehicle x="131" y="129" z="0.5" yaw="-180" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+        <weather cloudiness="0.1" precipitation="0" precipitation_deposits="0" wind_intensity="0.1" sun_azimuth_angle="0" sun_altitude_angle="80" />
+    </scenario>
+</scenarios>

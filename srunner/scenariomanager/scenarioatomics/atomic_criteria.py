@@ -670,11 +670,13 @@ class OffRoadTest(Criterion):
             current_location,
             project_to_road=False
         )
+
         park_waypoint = self._map.get_waypoint(
             current_location,
             project_to_road=False,
             lane_type=carla.LaneType.Parking
         )
+        
         if drive_waypoint or park_waypoint:
             self._offroad = False
         else:
