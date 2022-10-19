@@ -9,6 +9,9 @@ This module provides a human agent to control the ego vehicle via keyboard
 
 from __future__ import print_function
 
+from srunner.scenariomanager.carla_data_provider import CarlaDataProvider
+from srunner.scenariomanager.actorcontrols.visualizer import Visualizer
+
 import json
 
 try:
@@ -91,6 +94,8 @@ class HumanAgent(AutonomousAgent):
         self._controller = KeyboardControl(path_to_conf_file)
         self.prev_timestamp = 0
 
+        self.hero_actor = None
+
     def sensors(self):
         """
         Define the sensor suite required by the agent
@@ -117,12 +122,30 @@ class HumanAgent(AutonomousAgent):
 
         return sensors
 
+    def _get_hero_actor(self):
+        hero_actor = None
+        for actor in CarlaDataProvider.get_world().get_actors():
+            if 'role_name' in actor.attributes and actor.attributes['role_name'] == 'hero':
+                hero_actor = actor
+                self.visualizer = Visualizer(hero_actor, self.criterias)
+                break
+        return hero_actor
+
+    def setup_criterias(self, criterias):
+        self.criterias = criterias
+
     def run_step(self, input_data, timestamp):
         """
         Execute one step of navigation.
         """
+        # Search for the ego actor
+        if not self.hero_actor:
+            self.hero_actor = self._get_hero_actor()
+            return carla.VehicleControl()
+
         self.agent_engaged = True
         self._hic.run_interface(input_data)
+        self.visualizer.render()
 
         control = self._controller.parse_events(timestamp - self.prev_timestamp)
         self.prev_timestamp = timestamp
@@ -134,6 +157,7 @@ class HumanAgent(AutonomousAgent):
         Cleanup
         """
         self._hic.quit_interface = True
+        self.visualizer.reset()
 
 
 class KeyboardControl(object):

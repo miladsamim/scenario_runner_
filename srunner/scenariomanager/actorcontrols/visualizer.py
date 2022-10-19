@@ -53,7 +53,7 @@ class Visualizer(object):
 
     _video_writer = False
 
-    def __init__(self, actor):
+    def __init__(self, actor, criterias=None):
         self._actor = actor
         self._cv_image_bird = None
         self._cv_image_actor = None
@@ -64,7 +64,7 @@ class Visualizer(object):
         bp.set_attribute('image_size_x', '1000')
         bp.set_attribute('image_size_y', '400')
         self._camera_bird = CarlaDataProvider.get_world().spawn_actor(bp, carla.Transform(
-            carla.Location(x=20.0, z=50.0), carla.Rotation(pitch=-90, yaw=-90)), attach_to=self._actor)
+            carla.Location(x=20.0, z=30.0), carla.Rotation(pitch=-90, yaw=-90)), attach_to=self._actor)
         self._camera_bird.listen(lambda image: self._on_camera_update(
             image, birdseye=True))  # pylint: disable=unnecessary-lambda
 
@@ -79,6 +79,8 @@ class Visualizer(object):
         if self._video_writer:
             fourcc = cv2.VideoWriter_fourcc(*'mp4v')
             self._video = cv2.VideoWriter('recorded_video.avi', fourcc, 13, (1000, 800))
+        
+        self.criterias = criterias
 
     def reset(self):
         """
@@ -109,6 +111,13 @@ class Visualizer(object):
         else:
             self._cv_image_bird = cv2.cvtColor(np_image, cv2.COLOR_BGR2RGB)
 
+    criteria_text = {
+        'RouteCompletionTest': 'Route Completion: ',
+        'CollisionTest': 'Collision: ',
+
+
+    }
+
     def render(self):
         """
         Render images in an OpenCV window (has to be called on a regular basis)
@@ -123,8 +132,22 @@ class Visualizer(object):
             text = str(int(round((speed * 3.6))))+" kph"
             text = ' '*(7-len(text)) + text
             im_v = cv2.putText(im_v, text, (830, 310), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA)
+            font_scale, font_thickness =.4, 1
+            if self.criterias:
+                for criteria in self.criterias:
+                    if criteria.name == 'CollisionTest':
+                        self._visualize_collision(im_v, criteria, font_scale, font_thickness)
+                    elif criteria.name == 'RouteCompletionTest':
+                        pass
+
+
             cv2.imshow("", im_v)
             cv2.waitKey(1)
-
             if self._video_writer:
                 self._video.write(im_v)
+
+    def _visualize_collision(self, im_v, criteria, font_scale, font_thickness):
+        text = "Collisions: "
+        if criteria.test_status == 'FAILURE':
+            text = text + criteria.list_traffic_events[-1].get_message()
+        cv2.putText(im_v, text, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 0, 0), font_thickness, cv2.LINE_AA)

@@ -16,7 +16,13 @@ from srunner.scenariomanager.scenarioatomics.atomic_behaviors import (ActorTrans
                                                                       LaneChange,
                                                                       WaypointFollower,
                                                                       Idle)
-from srunner.scenariomanager.scenarioatomics.atomic_criteria import CollisionTest
+from srunner.scenariomanager.scenarioatomics.atomic_criteria import (CollisionTest,
+                                                                     InRouteTest,
+                                                                     RouteCompletionTest,
+                                                                     OutsideRouteLanesTest,
+                                                                     RunningRedLightTest,
+                                                                     RunningStopTest,
+                                                                     ActorSpeedAboveThresholdTest)
 from srunner.scenariomanager.scenarioatomics.atomic_trigger_conditions import InTriggerDistanceToVehicle, StandStill, InTriggerDistanceToLocation
 from srunner.scenarios.basic_scenario import BasicScenario
 from srunner.tools.scenario_helper import get_waypoint_in_distance
@@ -164,9 +170,35 @@ class StraightDriving(BasicScenario):
         """
         criteria = []
 
-        collision_criterion = CollisionTest(self.ego_vehicles[0])
+        route = convert_transform_to_location(self.route)
 
+        collision_criterion = CollisionTest(self.ego_vehicles[0], terminate_on_failure=False)
+
+        route_criterion = InRouteTest(self.ego_vehicles[0],
+                                      route=route,
+                                      offroad_max=30,
+                                      terminate_on_failure=True)
+
+        completion_criterion = RouteCompletionTest(self.ego_vehicles[0], route=route)
+
+        outsidelane_criterion = OutsideRouteLanesTest(self.ego_vehicles[0], route=route)
+
+        red_light_criterion = RunningRedLightTest(self.ego_vehicles[0])
+
+        stop_criterion = RunningStopTest(self.ego_vehicles[0])
+
+        blocked_criterion = ActorSpeedAboveThresholdTest(self.ego_vehicles[0],
+                                                         speed_threshold=0.1,
+                                                         below_threshold_max_time=90.0,
+                                                         terminate_on_failure=True)
+
+        criteria.append(completion_criterion)
         criteria.append(collision_criterion)
+        criteria.append(route_criterion)
+        criteria.append(outsidelane_criterion)
+        criteria.append(red_light_criterion)
+        criteria.append(stop_criterion)
+        criteria.append(blocked_criterion)
 
         return criteria
     

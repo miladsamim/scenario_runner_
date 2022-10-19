@@ -17,6 +17,8 @@ import carla
 import time
 
 from srunner.autoagents.autonomous_agent import AutonomousAgent
+from srunner.scenariomanager.actorcontrols.visualizer import Visualizer
+from srunner.scenariomanager.carla_data_provider import CarlaDataProvider
 
 
 class SimpleAgent(AutonomousAgent):
@@ -35,10 +37,28 @@ class SimpleAgent(AutonomousAgent):
             self.sensor_setup = lines[0].split(" ")[1]
             self._width = int(lines[1].split(" ")[1])
             self._height = int(lines[2].split(" ")[1])
-            self._visualize = bool(int(lines[3].split(" ")[1]))
+            self._visualize_sensors = bool(int(lines[3].split(" ")[1]))
+            self._external_visualizer = bool(int(lines[4].split(" ")[1]))
+
+        self.hero_actor = None            
+
+        if self._visualize_sensors:
+            self._display = Display(self._width, self._height, self.sensor_setup)            
+
+    def _get_hero_actor(self):
+        hero_actor = None
+        for actor in CarlaDataProvider.get_world().get_actors():
+            if 'role_name' in actor.attributes and actor.attributes['role_name'] == 'hero':
+                hero_actor = actor
+                if self._external_visualizer:
+                    self.visualizer = Visualizer(hero_actor)
+                break
+        return hero_actor
         
-        if self._visualize:
-            self._display = Display(self._width, self._height, self.sensor_setup)
+
+
+    def setup_criterias(self, criterias):
+        self.criterias = criterias
 
     def sensors(self):
         """
@@ -91,16 +111,26 @@ class SimpleAgent(AutonomousAgent):
         """
         Execute one step of navigation.
         """
-        # print("=====================>")
-        # for key, val in input_data.items():
-        #     if hasattr(val[1], 'shape'):
-        #         shape = val[1].shape
-        #         print("[{} -- {:06d}] with shape {}".format(key, val[0], shape))
-        #     else:
-        #         print("[{} -- {:06d}] ".format(key, val[0]))
-        # print("<=====================")
-        if self._visualize:
-            self._display.run_interface(input_data)
+        # Search for the ego actor
+        if not self.hero_actor:
+            self.hero_actor = self._get_hero_actor()
+            return carla.VehicleControl()
+
+        print("=====================>")
+        for key, val in input_data.items():
+            for criteria in self.criterias:
+                if criteria.test_status == "FAILURE":
+                    print(criteria.name)
+                    print(criteria.registered_collisions[-1])
+                    print(criteria.list_traffic_events[-1]._type)
+                    print(criteria.list_traffic_events[-1]._dict)
+            if hasattr(val[1], 'shape'):
+                shape = val[1].shape
+                print("[{} -- {:06d}] with shape {}".format(key, val[0], shape))
+            else:
+                print("[{} -- {:06d}] ".format(key, val[0]))
+        print("<=====================")
+        self._visualization(input_data)
 
         # DO SOMETHING SMART
         # time.sleep(2)
@@ -113,12 +143,20 @@ class SimpleAgent(AutonomousAgent):
 
         return control
     
+    def _visualization(self, input_data):
+        if self._visualize_sensors:
+            self._display.run_interface(input_data)
+        if self._external_visualizer:
+            self.visualizer.render()
+
     def destroy(self):
         """
         Cleanup
         """
-        if self._visualize:
+        if self._visualize_sensors:
             self._display.quit_interface = True 
+        if self._external_visualizer:
+            self.visualizer.reset()
 
 
 class Display(object):
@@ -133,7 +171,6 @@ class Display(object):
         self._height = height
         self._surface = None
         self.setup_sensor_specifics(sensor_setup)
-        
 
         pygame.init()
         pygame.font.init()

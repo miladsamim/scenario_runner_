@@ -359,7 +359,7 @@ class ScenarioRunner(object):
         if self._args.agent:
             agent_class_name = self.module_agent.__name__.title().replace('_', '')
             try:
-                self.agent_instance = getattr(self.module_agent, agent_class_name)(self._args.agentConfig)
+                self.agent_instance = getattr(self.module_agent, agent_class_name)(self._args.agentConfig, )
                 config.agent = self.agent_instance
             except Exception as e:          # pylint: disable=broad-except
                 traceback.print_exc()
