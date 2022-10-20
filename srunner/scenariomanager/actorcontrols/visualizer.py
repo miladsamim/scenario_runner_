@@ -61,7 +61,7 @@ class Visualizer(object):
         self._camera_actor = None
 
         bp = CarlaDataProvider.get_world().get_blueprint_library().find('sensor.camera.rgb')
-        bp.set_attribute('image_size_x', '1000')
+        bp.set_attribute('image_size_x', '650')
         bp.set_attribute('image_size_y', '400')
         self._camera_bird = CarlaDataProvider.get_world().spawn_actor(bp, carla.Transform(
             carla.Location(x=20.0, z=30.0), carla.Rotation(pitch=-90, yaw=-90)), attach_to=self._actor)
@@ -69,12 +69,14 @@ class Visualizer(object):
             image, birdseye=True))  # pylint: disable=unnecessary-lambda
 
         bp = CarlaDataProvider.get_world().get_blueprint_library().find('sensor.camera.rgb')
-        bp.set_attribute('image_size_x', '1000')
+        bp.set_attribute('image_size_x', '650')
         bp.set_attribute('image_size_y', '400')
         self._camera_actor = CarlaDataProvider.get_world().spawn_actor(bp, carla.Transform(
             carla.Location(x=2.3, z=1.0)), attach_to=self._actor)
         self._camera_actor.listen(lambda image: self._on_camera_update(
             image, birdseye=False))  # pylint: disable=unnecessary-lambda
+
+        self.log_window = np.zeros((100,650,3), dtype=np.uint8)
 
         if self._video_writer:
             fourcc = cv2.VideoWriter_fourcc(*'mp4v')
@@ -111,11 +113,16 @@ class Visualizer(object):
         else:
             self._cv_image_bird = cv2.cvtColor(np_image, cv2.COLOR_BGR2RGB)
 
-    criteria_text = {
+    criteria_text_generic = {
         'RouteCompletionTest': 'Route Completion: ',
         'CollisionTest': 'Collision: ',
-
-
+        'InRouteTest': 'On Route: ',
+        'RunningRedLightTest': 'Running a Red Light: ',
+        'RunningStopTest': 'Running a Stop Sign: ',
+        'ActorSpeedAboveThresholdTest': 'Actor Blocked: ',
+        'OutsideRouteLanesTest': 'Outside Lanes: ',
+        'InRouteTest': 'Route Deviation: ',
+        'OffRoadTest': 'Off-road: ',
     }
 
     def render(self):
@@ -123,31 +130,97 @@ class Visualizer(object):
         Render images in an OpenCV window (has to be called on a regular basis)
         """
         if self._cv_image_actor is not None and self._cv_image_bird is not None:
-            im_v = cv2.vconcat([self._cv_image_actor, self._cv_image_bird])
-            cv2.circle(im_v, (900, 300), 80, (170, 170, 170), -1)
+            # print(type(self._cv_image_actor))
+            # print(self.log_window.type(), self._cv_image_actor.type())
+            im_v = cv2.vconcat([self.log_window, self._cv_image_actor, self._cv_image_bird])
+            cv2.circle(im_v, (600, 400), 40, (170, 170, 170), -1)
             text = str(int(round((self._actor.get_velocity().x * 3.6))))+" kph"
 
             speed = np.sqrt(self._actor.get_velocity().x**2 + self._actor.get_velocity().y**2)
 
             text = str(int(round((speed * 3.6))))+" kph"
             text = ' '*(7-len(text)) + text
-            im_v = cv2.putText(im_v, text, (830, 310), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA)
-            font_scale, font_thickness =.4, 1
+            im_v = cv2.putText(im_v, text, (565, 405), cv2.FONT_HERSHEY_SIMPLEX, .5, (0, 0, 0), 2, cv2.LINE_AA)
+            font_scale, font_thickness =.3, 1
             if self.criterias:
-                for criteria in self.criterias:
-                    if criteria.name == 'CollisionTest':
-                        self._visualize_collision(im_v, criteria, font_scale, font_thickness)
-                    elif criteria.name == 'RouteCompletionTest':
-                        pass
-
+                for idx, criteria in enumerate(self.criterias):
+                    text = ''
+                    base_text = self.criteria_text_generic[criteria.name]
+                    if criteria.name == 'RouteCompletionTest':
+                        text = base_text + self._get_route_completion_text(criteria) 
+                    elif criteria.name == 'InRouteTest':
+                        text = base_text + self.get_in_route_text(criteria)
+                    elif criteria.name == 'CollisionTest':
+                        text = base_text + self._get_collision_text(criteria)
+                    elif criteria.name == 'RunningRedLightTest':
+                        text = base_text + self.get_red_light_text(criteria)
+                    elif criteria.name == 'RunningStopTest':
+                        text = base_text + self.get_stop_sign_text(criteria)
+                    elif criteria.name == 'ActorSpeedAboveThresholdTest':
+                        text = base_text + self.get_actor_speed_limit_text(criteria)
+                    elif criteria.name == 'OutsideRouteLanesTest':
+                        text = base_text + self.get_outside_route_lane_text(criteria)
+                    elif criteria.name == 'OffRoadTest':
+                        text = base_text + self.get_off_road_text(criteria)
+                    if text:
+                        self._visualize_generic(im_v, criteria, idx, text, font_scale, font_thickness)
 
             cv2.imshow("", im_v)
             cv2.waitKey(1)
             if self._video_writer:
                 self._video.write(im_v)
 
-    def _visualize_collision(self, im_v, criteria, font_scale, font_thickness):
-        text = "Collisions: "
+    def get_off_road_text(self, criteria):
+        if criteria._offroad:
+            return f'Off-road detected for {criteria._time_offroad:.1f} sec.'
+        else:
+            return ''
+
+    def get_in_route_text(self, criteria):
         if criteria.test_status == 'FAILURE':
-            text = text + criteria.list_traffic_events[-1].get_message()
-        cv2.putText(im_v, text, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 0, 0), font_thickness, cv2.LINE_AA)
+            return criteria.list_traffic_events[-1].get_message()
+        else:
+            return ''
+
+    def get_outside_route_lane_text(self, criteria):
+        if criteria._outside_lane_active and criteria._wrong_lane_active:
+            return  'Outside driving lanes + At the wrong lane'
+        elif criteria._outside_lane_active:
+            return  'Outside driving lanes'
+        elif criteria._wrong_lane_active:
+            return 'At the wrong lane'
+        return ''
+
+
+    def get_actor_speed_limit_text(self, criteria):
+        if criteria.test_status == 'FAILURE':
+            return criteria.list_traffic_events[-1].get_message()
+        else: 
+            return f'Not Blocked for {criteria._below_threshold_max_time} sec. yet.'
+
+    def get_stop_sign_text(self, criteria):
+        if criteria.test_status == 'FAILURE':
+            return  f'Count: {criteria.actual_value}' + ' | New: ' + criteria.list_traffic_events[-1].get_message()
+        else:
+            return ''
+
+    def get_red_light_text(self, criteria):
+        if criteria.test_status == 'FAILURE':
+            return  f'Count: {criteria.actual_value}' + ' | New: ' + criteria.list_traffic_events[-1].get_message()
+        else:
+            return ''
+
+    def _get_route_completion_text(self, criteria):
+        if criteria.test_status == 'FAILURE':
+            return  criteria.list_traffic_events[-1].get_message()
+        else:
+            return ''
+
+    def _get_collision_text(self, criteria):
+        if criteria.test_status == 'FAILURE':
+            return  f'Count: {criteria.actual_value}' + ' | New: ' + criteria.list_traffic_events[-1].get_message()
+        else:
+            return '' 
+    def _visualize_generic(self, im_v, criteria, idx, text, font_scale, font_thickness):
+        y_offset = idx*10+10
+        cv2.putText(im_v, text, (10, y_offset), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), font_thickness, cv2.LINE_AA)

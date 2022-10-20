@@ -1,7 +1,7 @@
-sensor_setup: hd_map_frontal                      # Either 'hd_map', '360_map' or 'hd_map_frontal'
+sensor_setup: hd_map                      # Either 'hd_map', '360_map' or 'hd_map_frontal'
 image_width: 500                           # image width in pixels 
 image_height: 400                          # image height in pixel
-visualize_sensors: 0                              # '1' or '0' to display sensor output
+visualize_sensors: 1                              # '1' or '0' to display sensor output
 external_visualizer: 1                            # Whether to use external visualizer for debugging, monitoring, etc.
 file: test.json                     # path to the file with the controls
 

@@ -22,12 +22,13 @@ from srunner.scenariomanager.scenarioatomics.atomic_criteria import (CollisionTe
                                                                      OutsideRouteLanesTest,
                                                                      RunningRedLightTest,
                                                                      RunningStopTest,
-                                                                     ActorSpeedAboveThresholdTest)
+                                                                     ActorSpeedAboveThresholdTest,
+                                                                     OffRoadTest)
 from srunner.scenariomanager.scenarioatomics.atomic_trigger_conditions import InTriggerDistanceToVehicle, StandStill, InTriggerDistanceToLocation
 from srunner.scenarios.basic_scenario import BasicScenario
 from srunner.tools.scenario_helper import get_waypoint_in_distance
 
-SECONDS_GIVEN_PER_METERS = 0.4 
+SECONDS_GIVEN_PER_METERS = 2 
 
 
 class StraightDriving(BasicScenario):
@@ -177,28 +178,33 @@ class StraightDriving(BasicScenario):
         route_criterion = InRouteTest(self.ego_vehicles[0],
                                       route=route,
                                       offroad_max=30,
-                                      terminate_on_failure=True)
+                                      terminate_on_failure=False)
 
         completion_criterion = RouteCompletionTest(self.ego_vehicles[0], route=route)
 
-        outsidelane_criterion = OutsideRouteLanesTest(self.ego_vehicles[0], route=route)
+        outsidelane_criterion = OutsideRouteLanesTest(self.ego_vehicles[0], 
+                                                      route=route, 
+                                                      terminate_on_failure=False)
 
         red_light_criterion = RunningRedLightTest(self.ego_vehicles[0])
+
+        off_road_test = OffRoadTest(self.ego_vehicles[0])
 
         stop_criterion = RunningStopTest(self.ego_vehicles[0])
 
         blocked_criterion = ActorSpeedAboveThresholdTest(self.ego_vehicles[0],
                                                          speed_threshold=0.1,
-                                                         below_threshold_max_time=90.0,
-                                                         terminate_on_failure=True)
+                                                         below_threshold_max_time=10.0,
+                                                         terminate_on_failure=False)
 
         criteria.append(completion_criterion)
-        criteria.append(collision_criterion)
         criteria.append(route_criterion)
         criteria.append(outsidelane_criterion)
+        criteria.append(off_road_test)
+        criteria.append(blocked_criterion)
+        criteria.append(collision_criterion)
         criteria.append(red_light_criterion)
         criteria.append(stop_criterion)
-        criteria.append(blocked_criterion)
 
         return criteria
     

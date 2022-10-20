@@ -1052,11 +1052,11 @@ class OutsideRouteLanesTest(Criterion):
     MAX_ALLOWED_WAYPOINT_ANGLE = 150.0  # Maximum change between the yaw-lane angle between frames
     WINDOWS_SIZE = 3                    # Amount of additional waypoints checked (in case the first on fails)
 
-    def __init__(self, actor, route, optional=False, name="OutsideRouteLanesTest"):
+    def __init__(self, actor, route, terminate_on_failure=True, optional=False,name="OutsideRouteLanesTest"):
         """
         Constructor
         """
-        super(OutsideRouteLanesTest, self).__init__(name, actor, 0, None, optional)
+        super(OutsideRouteLanesTest, self).__init__(name, actor, 0, None, optional, terminate_on_failure)
         self.logger.debug("%s.__init__()" % (self.__class__.__name__))
 
         self._actor = actor
@@ -1576,7 +1576,8 @@ class InRouteTest(Criterion):
 
                 self.test_status = "FAILURE"
                 self.actual_value += 1
-                new_status = py_trees.common.Status.FAILURE
+                if self._terminate_on_failure:
+                    new_status = py_trees.common.Status.FAILURE
 
         self.logger.debug("%s.update()[%s->%s]" % (self.__class__.__name__, self.status, new_status))
 

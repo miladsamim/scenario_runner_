@@ -51,10 +51,10 @@ class SimpleAgent(AutonomousAgent):
             if 'role_name' in actor.attributes and actor.attributes['role_name'] == 'hero':
                 hero_actor = actor
                 if self._external_visualizer:
-                    self.visualizer = Visualizer(hero_actor)
+                    self.visualizer = Visualizer(hero_actor, self.criterias)
                 break
         return hero_actor
-        
+    
 
 
     def setup_criterias(self, criterias):
@@ -116,20 +116,14 @@ class SimpleAgent(AutonomousAgent):
             self.hero_actor = self._get_hero_actor()
             return carla.VehicleControl()
 
-        print("=====================>")
-        for key, val in input_data.items():
-            for criteria in self.criterias:
-                if criteria.test_status == "FAILURE":
-                    print(criteria.name)
-                    print(criteria.registered_collisions[-1])
-                    print(criteria.list_traffic_events[-1]._type)
-                    print(criteria.list_traffic_events[-1]._dict)
-            if hasattr(val[1], 'shape'):
-                shape = val[1].shape
-                print("[{} -- {:06d}] with shape {}".format(key, val[0], shape))
-            else:
-                print("[{} -- {:06d}] ".format(key, val[0]))
-        print("<=====================")
+        # print("=====================>")
+        # for key, val in input_data.items():
+        #     if hasattr(val[1], 'shape'):
+        #         shape = val[1].shape
+        #         print("[{} -- {:06d}] with shape {}".format(key, val[0], shape))
+        #     else:
+        #         print("[{} -- {:06d}] ".format(key, val[0]))
+        # print("<=====================")
         self._visualization(input_data)
 
         # DO SOMETHING SMART
