@@ -30,6 +30,17 @@ class NpcAgent(AutonomousAgent):
         Setup the agent parameters
         """
         self._agent = None
+        with (open(path_to_conf_file, "r")) as f:
+            lines = f.read().split("\n")
+            self.sensor_setup = lines[0].split(" ")[1]
+            self._width = int(lines[1].split(" ")[1])
+            self._height = int(lines[2].split(" ")[1])
+            self._visualize_sensors = bool(int(lines[3].split(" ")[1]))
+            self._external_visualizer = bool(int(lines[4].split(" ")[1]))
+            self._fill_buffer = bool(int(lines[5].split(" ")[1]))
+
+    def setup_criterias(self, criterias):
+        self.criterias = criterias 
 
     def sensors(self):
         """
@@ -66,7 +77,7 @@ class NpcAgent(AutonomousAgent):
             hero_actor = None
             for actor in CarlaDataProvider.get_world().get_actors():
                 if 'role_name' in actor.attributes and actor.attributes['role_name'] == 'hero':
-                    hero_actor = actor
+                    self.hero_actor = actor
                     break
 
             if not hero_actor:

@@ -1,0 +1,7 @@
+sensor_setup: hd_map
+image_width: 500
+image_height: 400
+visualize_sensors: 0
+external_visualizer: 0
+file: test.json
+model_path: .\model_store\hd_map_500w_400h_

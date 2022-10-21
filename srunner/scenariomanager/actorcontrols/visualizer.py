@@ -211,7 +211,7 @@ class Visualizer(object):
             return ''
 
     def _get_route_completion_text(self, criteria):
-        if criteria.test_status == 'FAILURE':
+        if criteria.list_traffic_events:
             return  criteria.list_traffic_events[-1].get_message()
         else:
             return ''

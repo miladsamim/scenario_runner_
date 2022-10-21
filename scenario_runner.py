@@ -88,6 +88,8 @@ class ScenarioRunner(object):
         # to the simulator. Here we'll assume the simulator is accepting
         # requests in the localhost at port 2000.
         self.client = carla.Client(args.host, int(args.port))
+        CarlaDataProvider.set_client(self.client)
+        CarlaDataProvider.set_world(self.client.get_world())
         self.client.set_timeout(self.client_timeout)
 
         dist = pkg_resources.get_distribution("carla")
@@ -302,8 +304,8 @@ class ScenarioRunner(object):
         """
         Load a new CARLA world and provide data to CarlaDataProvider
         """
-
-        if self._args.reloadWorld:
+        current_map = CarlaDataProvider.get_map().name.split('/')[-1]
+        if self._args.reloadWorld or current_map != town:
             self.world = self.client.load_world(town)
         else:
             # if the world should not be reloaded, wait at least until all ego vehicles are ready
