@@ -1,7 +1,10 @@
 import traceback
+from mpi4py import MPI
 
 from srunner.tools import dotdict
 from scenario_runner import ScenarioRunner
+import gym
+import carla 
 
 
 import sys
@@ -45,6 +48,84 @@ agent_config = {
             'file': 'test.json',
         }
 
+
+SCENARIO_SPAWNER = '.scenario_spawner.py'
+
+class CarlaEnv:
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    size = comm.Get_size()
+    name = MPI.Get_processor_name()
+    status = MPI.Status()
+    def __init__(self, scenario_specification, agentConfig=None):
+        self.scenario_specification = scenario_specification
+        self.icomm = None 
+        if agentConfig:
+            self._setup_agent()
+    
+    def _run_scenario(self):
+        scenario_runner = None
+        result = True
+        self._setup_scenario()
+        try:
+            print("Building scenario")
+            self.icomm = MPI.COMM_SELF.Spawn(sys.executable, args=[SCENARIO_SPAWNER], maxprocs=1, root=0)
+            self.icomm.send(self.scenario_specification, dest=0)
+        except: 
+            ValueError('Failed to build scenario')
+    
+    def reset_env(self):
+        """Reset sends message to destroy current scenario and starts a new one"""
+        if self.icomm:
+            data = {'reset': True,
+                    'action': None} 
+            self.icomm.send(data, dest=0, tag=1)
+        self._run_scenario()
+    
+    def step(self, action, additional=None):
+        """Action is a dict array specifying a subset of:
+           'throttle':  [0.0, 1.0]  (defalt: 0)
+           'steer':     [-1.0, 1.0] (defalt: 0)
+           'brake'      [0.0, 1.0]  (defalt: 0)
+           'hand_brake' bool        (default: False)
+           'reverse'    bool        (default: False)
+           'manual'     bool        (defalt: False)
+           'gear'       int         (defalt: 0)"""
+
+        # take action and receive s',r,d
+        data = {'action': action,
+                'reset':False} 
+        data = self.icomm.sendrecv(data, dest=0, sendtag=2, source=0, recvtag=MPI.ANY_TAG)
+        sensor_data = data['sensor_data']
+        criterias = data['criterias']
+        done = data['done']
+        velocity = data['velocity']
+        reward = self._compute_reward(criterias)
+        state = self._process_state(sensor_data, velocity)
+
+        return state, reward, done
+
+    def _process_state(self, sensor_data, velocity):
+        pass 
+
+    def _compute_reward(self, criterias):
+        pass 
+
+    def _setup_scenario(self):
+        prev_path = self.scenario_specification.agentConfig
+        self.scenario_specification.useMPI = True
+        self.scenario_specification.agentConfig = self._agent_config_path if self.agentConfig else prev_path
+
+    def _setup_agent(self):
+        model_path = '.\\model_store\\' + self.agent_config['sensor_setup'] + '_' +\
+                     self.agent_config['image_width'] + 'w_' + self.agent_config['image_height'] + 'h_'
+        self.agent_config['model_path'] = model_path
+        new_path = self.scenario_specification.agentConfig[:-4] + '_new.txt'
+        with open(new_path, 'w') as fp:
+            for key, value in agent_config.items(): 
+                fp.write('%s: %s\n' % (key, value))
+        self._agent_config_path = new_path
+
 class Trainer:
     def __init__(self, scenario_specifications, iterations, debug=False, agentConfig=None):
         self.scenario_specifications = scenario_specifications
@@ -52,8 +133,6 @@ class Trainer:
         self.scenario_specifications.debug = debug 
         self.agentConfig = agentConfig 
 
-        if agentConfig:
-            self._setup_agent()
         #self._setup_scenario()
 
     def _run_scenario(self):
@@ -77,9 +156,9 @@ class Trainer:
         self.scenario_specifications.agentConfig = self._agent_config_path if self.agentConfig else prev_path
 
     def _setup_agent(self):
-        model_path = '.\\model_store\\' + agent_config['sensor_setup'] + '_' +\
-                     agent_config['image_width'] + 'w_' + agent_config['image_height'] + 'h_'
-        agent_config['model_path'] = model_path
+        model_path = '.\\model_store\\' + self.agent_config['sensor_setup'] + '_' +\
+                     self.agent_config['image_width'] + 'w_' + self.agent_config['image_height'] + 'h_'
+        self.agent_config['model_path'] = model_path
         new_path = self.scenario_specifications.agentConfig[:-4] + '_new.txt'
         with open(new_path, 'w') as fp:
             for key, value in agent_config.items(): 

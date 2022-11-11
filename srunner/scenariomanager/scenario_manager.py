@@ -15,12 +15,16 @@ import sys
 import time
 
 import py_trees
+import carla 
 
 from srunner.autoagents.agent_wrapper import AgentWrapper
 from srunner.scenariomanager.carla_data_provider import CarlaDataProvider
 from srunner.scenariomanager.result_writer import ResultOutputProvider
 from srunner.scenariomanager.timer import GameTime
 from srunner.scenariomanager.watchdog import Watchdog
+
+from mpi4py import MPI
+
 
 
 class ScenarioManager(object):
@@ -41,7 +45,7 @@ class ScenarioManager(object):
     5. If needed, cleanup with manager.stop_scenario()
     """
 
-    def __init__(self, debug_mode=False, sync_mode=False, timeout=2.0):
+    def __init__(self, debug_mode=False, sync_mode=False, timeout=2.0, use_mpi=False):
         """
         Setups up the parameters, which will be filled at load_scenario()
 
@@ -57,6 +61,11 @@ class ScenarioManager(object):
         self._sync_mode = sync_mode
         self._watchdog = None
         self._timeout = timeout
+        self.use_mpi = use_mpi
+        if use_mpi:
+            self.comm = MPI.Comm.Get_parent()
+            self.size = self.comm.Get_size()
+            self.rank = self.comm.Get_rank()
 
         self._running = False
         self._timestamp_last_run = 0.0
@@ -171,13 +180,19 @@ class ScenarioManager(object):
             CarlaDataProvider.on_carla_tick()
 
             if self._agent is not None:
-                ego_action = self._agent()  # pylint: disable=not-callable
+                if self.use_mpi:
+                    data = self.icomm.recv(source=0, tag=MPI.ANY_TAG)
+                    ego_action = carla.VehicleControl(data['action']) if data['action'] else carla.VehicleControl()
+                    if data['reset']:
+                        self._running = False 
+                else:
+                    ego_action = self._agent()  # pylint: disable=not-callable
 
-            if self._agent is not None:
                 self.ego_vehicles[0].apply_control(ego_action)
 
             # Tick scenario
             self.scenario_tree.tick_once()
+
 
             if self._debug_mode:
                 print("\n")
@@ -189,6 +204,20 @@ class ScenarioManager(object):
 
         if self._sync_mode and self._running and self._watchdog.get_status():
             CarlaDataProvider.get_world().tick()
+        
+        if self.use_mpi:
+            # get state data 
+            vehicle_agent = self._agent._agent
+            sensor_data = vehicle_agent.sensor_interface.get_data() 
+            velocity = self.ego_vehicles[0].get_velocity()
+            criterias = vehicle_agent.criterias
+            data = {
+                'sensor data': sensor_data,
+                'criterias': criterias,
+                'velocity': velocity,
+                'done': self._running
+            }
+            self.comm.send(data, dest=0, tag=2)
 
     def get_running_status(self):
         """
