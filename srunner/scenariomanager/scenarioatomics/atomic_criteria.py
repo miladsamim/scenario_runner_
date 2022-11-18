@@ -318,6 +318,7 @@ class CollisionTest(Criterion):
         self.registered_collisions = []
         self.last_id = None
         self.collision_time = None
+        self.registered_count = 0
 
     def update(self):
         """
@@ -434,7 +435,18 @@ class CollisionTest(Criterion):
         # Number 0: static objects -> ignore it
         if event.other_actor.id != 0:
             self.last_id = event.other_actor.id
-
+    
+    def to_pickable(self):
+        data = {'count': self.actual_value,
+                'collision': False,
+                'collisionData': None}
+        if self.registered_count < self.actual_value:
+            self.registered_count = self.actual_value
+            data['collision'] = True
+            data['collisionData'] = self.list_traffic_events[-1].get_dict()
+        
+        return data
+        
 
 class ActorSpeedAboveThresholdTest(Criterion):
 
@@ -459,6 +471,7 @@ class ActorSpeedAboveThresholdTest(Criterion):
         self._speed_threshold = speed_threshold
         self._below_threshold_max_time = below_threshold_max_time
         self._time_last_valid_state = None
+        self.previous_block_location = None 
 
     def update(self):
         """
@@ -508,6 +521,23 @@ class ActorSpeedAboveThresholdTest(Criterion):
             'y': location.y,
             'z': location.z,
         })
+
+    def to_pickable(self):
+        data = {
+            'blockDuration': self._below_threshold_max_time,
+            'blockSpeed': self._speed_threshold,
+            'blocked': False,
+            'blockedData': None,
+        }
+        if self.test_status == 'FAILURE':
+            latest_block_loc = self.list_traffic_events[-1].get_dict()
+            if not self.previous_block_location or self.previous_block_location != latest_block_loc:
+                self.previous_block_location = latest_block_loc 
+                data['blocked'] = True 
+                data['blockedData'] = self.list_traffic_events[-1].get_dict()
+        return data 
+
+
 
 
 class KeepLaneTest(Criterion):
@@ -646,6 +676,7 @@ class OffRoadTest(Criterion):
 
         self._map = CarlaDataProvider.get_map()
         self._offroad = False
+        self._offroad_prev = False
 
         self._duration = duration
         self._prev_time = None
@@ -703,7 +734,16 @@ class OffRoadTest(Criterion):
 
         return new_status
 
-
+    def to_pickable(self):
+        data = {'isOffRoad': self._offroad,
+                'count': self.actual_value,
+                'offRoadTime': self._time_offroad}
+        if not self._offroad_prev and self._offroad:
+            self.actual_value += 1 
+            data['count'] = self.actual_value
+        self._offroad_prev = self._offroad
+        return data
+        
 class EndofRoadTest(Criterion):
 
     """
@@ -1070,6 +1110,11 @@ class OutsideRouteLanesTest(Criterion):
 
         self._outside_lane_active = False
         self._wrong_lane_active = False
+        self._outside_lane_active_prev = False
+        self._wrong_lane_active_prev = False
+        self.wrong_lane_count = 0
+        self._outside_lane_count = 0
+        
         self._last_road_id = None
         self._last_lane_id = None
         self._total_distance = 0
@@ -1228,6 +1273,23 @@ class OutsideRouteLanesTest(Criterion):
             self.actual_value = round(percentage, 2)
 
         super(OutsideRouteLanesTest, self).terminate(new_status)
+
+    def to_pickable(self):
+        data = {
+            'isWrongLane': self._wrong_lane_active,
+            'isOutsideDrivingLanes': self._outside_lane_active,
+            'wrongLaneCount': self.wrong_lane_count,
+            'outsideDrivingLanesCount': self._outside_lane_count,
+        }
+        if not self._wrong_lane_active_prev and self._wrong_lane_active:
+            self.wrong_lane_count += 1
+            data['wrongLaneCount'] = self.wrong_lane_count
+        if not self._outside_lane_active_prev and self._outside_lane_active:
+            self._outside_lane_count += 1 
+            data['outsideDrivingLanesCount'] = self._outside_lane_count
+        self._wrong_lane_active_prev = self._wrong_lane_active
+        self._outside_lane_active_prev = self._outside_lane_active
+        return data 
 
 
 class WrongLaneTest(Criterion):
@@ -1583,6 +1645,17 @@ class InRouteTest(Criterion):
 
         return new_status
 
+    def to_pickable(self):
+        data = {
+                'off_road_max': self._offroad_max,
+                'off_road': False,
+                'deviation_location': False
+        }
+        if self.list_traffic_events:
+            data['deviation_location'] = self.list_traffic_events[-1].get_dict()['route_completed']
+            data['off_road'] = True 
+        return data 
+
 
 class RouteCompletionTest(Criterion):
 
@@ -1686,6 +1759,11 @@ class RouteCompletionTest(Criterion):
             self.test_status = "FAILURE"
         super(RouteCompletionTest, self).terminate(new_status)
 
+    def to_pickable(self):
+        data = {'route_completed': 0}
+        if self.list_traffic_events:
+            data['route_completed'] = self.list_traffic_events[-1].get_dict()['route_completed']
+        return data 
 
 class RunningRedLightTest(Criterion):
 
@@ -1711,6 +1789,7 @@ class RunningRedLightTest(Criterion):
         self._last_red_light_id = None
         self.actual_value = 0
         self.debug = False
+        self.registered_count = 0
 
         all_actors = self._world.get_actors()
         for _actor in all_actors:
@@ -1826,6 +1905,16 @@ class RunningRedLightTest(Criterion):
 
         return new_status
 
+    def to_pickable(self):
+        data = {'count': self.actual_value,
+                'redLightRun': False,
+                'redLightRunData': None}
+        if self.registered_count < self.actual_value:
+            self.registered_count = self.actual_value
+            data['redLightRun'] = True 
+            data['redLightRunData'] = self.list_traffic_events[-1].get_dict()
+        return data
+
     def rotate_point(self, point, angle):
         """
         rotate a given point by a given angle
@@ -1900,6 +1989,7 @@ class RunningStopTest(Criterion):
         self._stop_completed = False
         self._affected_by_stop = False
         self.actual_value = 0
+        self.registered_count = 0 
 
         all_actors = self._world.get_actors()
         for _actor in all_actors:
@@ -2046,3 +2136,13 @@ class RunningStopTest(Criterion):
         self.logger.debug("%s.update()[%s->%s]" % (self.__class__.__name__, self.status, new_status))
 
         return new_status
+    
+    def to_pickable(self):
+        data = {'count': self.actual_value,
+                'stopSignRun': False,
+                'stopSignRunData': None}
+        if self.registered_count < self.actual_value:
+            self.registered_count = self.actual_value
+            data['stopSignRun'] = True 
+            data['stopSignRunData'] = self.list_traffic_events[-1].get_dict()
+        return data

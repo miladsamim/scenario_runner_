@@ -16,6 +16,7 @@ import time
 
 import py_trees
 import carla 
+import numpy as np
 
 from srunner.autoagents.agent_wrapper import AgentWrapper
 from srunner.scenariomanager.carla_data_provider import CarlaDataProvider
@@ -45,7 +46,7 @@ class ScenarioManager(object):
     5. If needed, cleanup with manager.stop_scenario()
     """
 
-    def __init__(self, debug_mode=False, sync_mode=False, timeout=2.0, use_mpi=False):
+    def __init__(self, debug_mode=False, sync_mode=False, timeout=2.0, use_mpi=False, is_learner=False):
         """
         Setups up the parameters, which will be filled at load_scenario()
 
@@ -62,10 +63,11 @@ class ScenarioManager(object):
         self._watchdog = None
         self._timeout = timeout
         self.use_mpi = use_mpi
+        self.is_learner = is_learner
         if use_mpi:
-            self.comm = MPI.Comm.Get_parent()
-            self.size = self.comm.Get_size()
-            self.rank = self.comm.Get_rank()
+            self.icomm = MPI.Comm.Get_parent()
+            self.size = self.icomm.Get_size()
+            self.rank = self.icomm.Get_rank()
 
         self._running = False
         self._timestamp_last_run = 0.0
@@ -166,7 +168,6 @@ class ScenarioManager(object):
         Run next tick of scenario and the agent.
         If running synchornously, it also handles the ticking of the world.
         """
-
         if self._timestamp_last_run < timestamp.elapsed_seconds and self._running:
             self._timestamp_last_run = timestamp.elapsed_seconds
 
@@ -181,10 +182,13 @@ class ScenarioManager(object):
 
             if self._agent is not None:
                 if self.use_mpi:
+                    with open('receive_action.txt', mode='w') as fp:
+                        fp.writelines(time.asctime())
+                        fp.writelines('\nAwaiting message')
                     data = self.icomm.recv(source=0, tag=MPI.ANY_TAG)
-                    ego_action = carla.VehicleControl(data['action']) if data['action'] else carla.VehicleControl()
+                    ego_action = carla.VehicleControl(**data['action']) if data['action'] else carla.VehicleControl()
                     if data['reset']:
-                        self._running = False 
+                        self._running = False     
                 else:
                     ego_action = self._agent()  # pylint: disable=not-callable
 
@@ -209,15 +213,37 @@ class ScenarioManager(object):
             # get state data 
             vehicle_agent = self._agent._agent
             sensor_data = vehicle_agent.sensor_interface.get_data() 
-            velocity = self.ego_vehicles[0].get_velocity()
-            criterias = vehicle_agent.criterias
+            # visualize if set
+            if (vehicle_agent, 'SimpleAgent') and (vehicle_agent._visualize_sensors or vehicle_agent._external_visualizer):
+                vehicle_agent.run_step(sensor_data,0)
+            velocity = self.get_velocity(self.ego_vehicles[0])
+            criterias = self.process_criterias(vehicle_agent.criterias)
             data = {
-                'sensor data': sensor_data,
+                'sensor_data': sensor_data,
                 'criterias': criterias,
                 'velocity': velocity,
-                'done': self._running
+                'done': not self._running
             }
-            self.comm.send(data, dest=0, tag=2)
+            self.icomm.send(data, dest=0, tag=2)
+
+        if not self._running: # prepare for clean up
+            self.use_mpi = False 
+
+    def process_criterias(self, criterias):
+        data = {}
+        for criteria in criterias:
+            if hasattr(criteria, 'to_pickable'):
+                data[criteria.name] = criteria.to_pickable()
+            # if criteria.name == 'RouteCompletionTest':
+            #     data['RouteCompletionTest'] = criteria.to_pickable()
+            # elif criteria.name == 'InRouteTest':
+            #     pass 
+        return data 
+
+    def get_velocity(self, ego_vehicle):
+        velocity_vec = ego_vehicle.get_velocity()
+        velocity = np.sqrt(velocity_vec.x**2 + velocity_vec.y**2)
+        return velocity
 
     def get_running_status(self):
         """

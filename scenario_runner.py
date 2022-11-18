@@ -104,7 +104,7 @@ class ScenarioRunner(object):
             self.module_agent = importlib.import_module(module_name)
 
         # Create the ScenarioManager
-        self.manager = ScenarioManager(self._args.debug, self._args.sync, self._args.timeout, self._args.useMPI)
+        self.manager = ScenarioManager(self._args.debug, self._args.sync, self._args.timeout, self._args.useMPI, self._args.isLearner)
 
         # Create signal handler for SIGINT
         self._shutdown_requested = False
@@ -562,7 +562,8 @@ def main():
     parser.add_argument('--additionalScenario', default='', help='Provide additional scenario implementations (*.py)')
 
     parser.add_argument('--debug', action="store_true", help='Run with debug output')
-    parser.add_argument('--useMPI', action="store_true", help='Use MPI, is used for training to link simulation with training loop')
+    parser.add_argument('--useMPI', default=False, action="store_true", help='Use MPI, is used for training to link simulation with training loop')
+    parser.add_argument('--isLearner', default=False, action="store_true", help='Use MPI, is used for training to link simulation with training loop')
     parser.add_argument('--reloadWorld', action="store_true",
                         help='Reload the CARLA world before starting a scenario (default=True)')
     parser.add_argument('--record', type=str, default='',

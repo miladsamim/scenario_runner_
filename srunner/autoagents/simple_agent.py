@@ -54,8 +54,6 @@ class SimpleAgent(AutonomousAgent):
                     self.visualizer = Visualizer(hero_actor, self.criterias)
                 break
         return hero_actor
-    
-
 
     def setup_criterias(self, criterias):
         self.criterias = criterias
@@ -68,7 +66,9 @@ class SimpleAgent(AutonomousAgent):
         img_h = self._height 
         base_sensors = [
                             {'type': 'sensor.other.gnss', 'x': 0.7, 'y': -0.4, 'z': 1.60, 'id': 'GPS'},
-                            {'type': 'sensor.other.imu', 'id': 'IMU'}
+                            {'type': 'sensor.other.imu', 'id': 'IMU'},
+                            {'id': 'front_rgb','type': 'sensor.camera.rgb', 'x':0, 'y': 0, 'z':2.2, 'pitch':0, 
+                                     'yaw': 0, 'roll':0, 'width':img_w, 'height':img_h, 'fov':100},
                        ]
         sensors_hd_map = base_sensors + [
                             {'id': 'bev_sem','type': 'sensor.camera.semantic_segmentation', 'x':0, 'y': 0, 'z':40, 'pitch':-90, 
@@ -140,7 +140,7 @@ class SimpleAgent(AutonomousAgent):
     def _visualization(self, input_data):
         if self._visualize_sensors:
             self._display.run_interface(input_data)
-        if self._external_visualizer:
+        if self._external_visualizer and self.hero_actor:
             self.visualizer.render()
 
     def destroy(self):
@@ -176,6 +176,7 @@ class Display(object):
     def setup_sensor_specifics(self, sensor_setup):
         if sensor_setup == 'hd_map':
             self.layout_func = self.hd_map_layout
+            self._height = self._height * 2
         elif sensor_setup == 'hd_map_frontal':
             self.layout_func = self.hd_map_frontal_layout
             self._width = self._width * 3 
@@ -211,12 +212,14 @@ class Display(object):
         pygame.quit()
     
     def hd_map_layout(self, input_data):
-        return input_data['bev_sem'][1][:, :, -2::-1]
+        return np.concatenate([input_data['bev_sem'][1][:, :, -2::-1],
+                               input_data['front_rgb'][1][:,:, -2::-1]], axis=0)
+        # return input_data['bev_sem'][1][:, :, -2::-1]
     
     def hd_map_frontal_layout(self, input_data):
         hd_img = input_data['bev_sem'][1][:, :, -2::-1]
         row1 = np.concatenate([input_data['front_left_sem'][1][:, :, -2::-1], input_data['front_sem'][1][:, :, -2::-1], 
-                               input_data['front_right_sem'][1][:, :, -2::-1]], axis=1)
+                               input_data['front_right_sem'][1][:, :, 2::-1]], axis=1)
         row2 = np.concatenate([np.zeros_like(hd_img), hd_img, np.zeros_like(hd_img)], axis=1)
         tiled = np.concatenate([row1,row2], axis=0)
         return tiled 

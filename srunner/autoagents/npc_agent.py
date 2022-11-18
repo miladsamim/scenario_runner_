@@ -14,6 +14,7 @@ from agents.navigation.basic_agent import BasicAgent
 
 from srunner.autoagents.autonomous_agent import AutonomousAgent
 from srunner.scenariomanager.carla_data_provider import CarlaDataProvider
+from srunner.scenariomanager.actorcontrols.visualizer import Visualizer
 
 
 class NpcAgent(AutonomousAgent):
@@ -30,6 +31,7 @@ class NpcAgent(AutonomousAgent):
         Setup the agent parameters
         """
         self._agent = None
+        self.hero_actor = None
         with (open(path_to_conf_file, "r")) as f:
             lines = f.read().split("\n")
             self.sensor_setup = lines[0].split(" ")[1]
@@ -59,44 +61,56 @@ class NpcAgent(AutonomousAgent):
              'id': 'LIDAR'}
         ]
         """
-
         sensors = [
-            {'type': 'sensor.camera.rgb', 'x': 0.7, 'y': -0.4, 'z': 1.60, 'roll': 0.0, 'pitch': 0.0, 'yaw': 0.0,
-             'width': 300, 'height': 200, 'fov': 100, 'id': 'Left'},
-        ]
+                            {'type': 'sensor.other.gnss', 'x': 0.7, 'y': -0.4, 'z': 1.60, 'id': 'GPS'},
+                            {'type': 'sensor.other.imu', 'id': 'IMU'},
+                            {'id': 'front_rgb','type': 'sensor.camera.rgb', 'x':0, 'y': 0, 'z':2.2, 'pitch':0, 
+                                     'yaw': 0, 'roll':0, 'width': 300, 'height': 200, 'fov': 100,},
+                ]   
 
         return sensors
+
+    def _get_hero_actor(self):
+        hero_actor = None
+        for actor in CarlaDataProvider.get_world().get_actors():
+            if 'role_name' in actor.attributes and actor.attributes['role_name'] == 'hero':
+                hero_actor = actor
+                self.visualizer = Visualizer(hero_actor, self.criterias)
+                break
+        return hero_actor
 
     def run_step(self, input_data, timestamp):
         """
         Execute one step of navigation.
         """
         if not self._agent:
-
-            # Search for the ego actor
-            hero_actor = None
-            for actor in CarlaDataProvider.get_world().get_actors():
-                if 'role_name' in actor.attributes and actor.attributes['role_name'] == 'hero':
-                    self.hero_actor = actor
-                    break
-
-            if not hero_actor:
+           # Search for the ego actor
+            if not self.hero_actor:
+                self.hero_actor = self._get_hero_actor()
                 return carla.VehicleControl()
-
             # Add an agent that follows the route to the ego
-            self._agent = BasicAgent(hero_actor, 30)
+            if self.hero_actor:
+                self._agent = BasicAgent(self.hero_actor, 30)
+                plan = []
+                prev_wp = None
+                for transform, _ in self._global_plan_world_coord:
+                    wp = CarlaDataProvider.get_map().get_waypoint(transform.location)
+                    if prev_wp:
+                        plan.extend(self._agent.trace_route(prev_wp, wp))
+                    prev_wp = wp
 
-            plan = []
-            prev_wp = None
-            for transform, _ in self._global_plan_world_coord:
-                wp = CarlaDataProvider.get_map().get_waypoint(transform.location)
-                if prev_wp:
-                    plan.extend(self._agent.trace_route(prev_wp, wp))
-                prev_wp = wp
-
-            self._agent.set_global_plan(plan)
-
+                self._agent.set_global_plan(plan)
+            else: 
+                print("Can not find")
             return carla.VehicleControl()
-
         else:
+            self.visualizer.render()
             return self._agent.run_step()
+        
+
+    def destroy(self):
+        """
+        Cleanup
+        """
+        if self.hero_actor:
+            self.visualizer.reset()

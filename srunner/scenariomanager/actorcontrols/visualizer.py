@@ -94,6 +94,7 @@ class Visualizer(object):
         if self._camera_actor:
             self._camera_actor.destroy()
             self._camera_actor = None
+        cv2.destroyAllWindows()
 
     def _on_camera_update(self, image, birdseye):
         """
@@ -178,7 +179,7 @@ class Visualizer(object):
 
     def get_in_route_text(self, criteria):
         if criteria.test_status == 'FAILURE':
-            return criteria.list_traffic_events[-1].get_message()
+            return criteria.list_traffic_events[-1].get_message() + f' | Safe route {criteria._in_safe_route}'
         else:
             return ''
 
@@ -190,7 +191,6 @@ class Visualizer(object):
         elif criteria._wrong_lane_active:
             return 'At the wrong lane'
         return ''
-
 
     def get_actor_speed_limit_text(self, criteria):
         if criteria.test_status == 'FAILURE':

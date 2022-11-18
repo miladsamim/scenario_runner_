@@ -1,0 +1,1 @@
+{'RouteCompletionTest': {'route_completed': 65.78605624941791}, 'InRouteTest': {'off_road_max': 30, 'off_road': False}, 'CollisionTest': {'Count': 2, 'Collision': True, 'CollisionData': {'type': 'static.wall', 'id': 0, 'x': 244.1685333251953, 'y': -179.8363037109375, 'z': 0.06491900980472565}}}

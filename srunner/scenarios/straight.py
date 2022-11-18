@@ -183,7 +183,7 @@ class StraightDriving(BasicScenario):
         completion_criterion = RouteCompletionTest(self.ego_vehicles[0], route=route)
 
         outsidelane_criterion = OutsideRouteLanesTest(self.ego_vehicles[0], 
-                                                      route=route, 
+                                                      route, 
                                                       terminate_on_failure=False)
 
         red_light_criterion = RunningRedLightTest(self.ego_vehicles[0])
