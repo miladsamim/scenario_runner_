@@ -171,7 +171,7 @@ class Trainer:
         self.env.reset_env()
         _,_,done = self.env.step(None)
         while not done:
-            action = {'throttle':.6}
+            action = {'throttle':.4}
             _,_,done = self.env.step(action)
 
     def _monitor_criterias(self):

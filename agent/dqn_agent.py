@@ -7,6 +7,9 @@ from torch.utils.tensorboard import SummaryWriter
 
 import random 
 import os 
+from timeit import default_timer as timer 
+
+from . import MemoryBufferSimple
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 EVAL_FREQ=25
@@ -36,15 +39,18 @@ class DQN_Agent:
 
     # Tasks 
     # experience_replay
-    # hold the buffer 
+    # hold the buffer
     # get_action
     # load model
     # save model
 
     def __init__(self, environment, architecture, architecture_args, explore_rate, learning_rate,
-                 batch_size, memory_capacity, num_episodes, learning_rate_drop_frame_limit,
+                 batch_size, memory_capacity, num_frames, num_episodes, learning_rate_drop_frame_limit,
                  target_update_frequency, discount=0.99, delta=1, model_name=None):
-        self.action_size = self.env.action_space_size
+        # self.action_size = self.env.action_space_size
+        self.throttle_act_space = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        self.brake_act_space = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        self.steering_act_space = [-1.0, -0.8, -0.6, -0.4, -0.2, 0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
         self.avg_reward = None
         self.dqn = architecture(*architecture_args).to(DEVICE)
         self.target_dqn = architecture(*architecture_args).to(DEVICE)
@@ -61,14 +67,51 @@ class DQN_Agent:
         # Training parameters setup
         self.target_update_frequency = target_update_frequency
         self.discount = discount
-        self.replay_memory = rplm.Replay_Memory(memory_capacity, batch_size)
+        self.num_frames = num_frames
+        self.replay_memory = MemoryBufferSimple(num_frames=num_frames, max_buffer_sz=memory_capacity)
+        self.replay_memory_sampler = torch.utils.data.DataLoader(self.replay_memory, batch_size=batch_size)
+        self.memory_sampler = torch.utils.data.DataLoader()
         # self.training_metadata = utils.Training_Metadata(frame=self.sess.run(self.frames), frame_limit=learning_rate_drop_frame_limit,
         # 												   episode=self.sess.run(self.episode), num_episodes=num_episodes)
-        self.training_metadata = utils.Training_Metadata(frame=0, frame_limit=learning_rate_drop_frame_limit,
-                                                         episode=0, num_episodes=num_episodes)
+
         self.delta = delta
-        utils.document_parameters(self)
         self.start_time = timer()
+
+    
+    # Description: Performs one step of batch gradient descent on the DDQN loss function. 
+    # Parameters:
+    # - alpha: Number, the learning rate 
+    # Output: None
+    def experience_replay(self):
+        batch_X = next(iter(self.memory_sampler))
+        
+        state_batch, action_batch, reward_batch, next_state_batch, done_batch = self.replay_memory.get_mini_batch(self.training_metadata)
+        state_batch = torch.tensor(np.array(state_batch), dtype=torch.float32).to(DEVICE)
+        action_batch = torch.tensor(np.array(action_batch), dtype=torch.int64).argmax(dim=1,keepdim=True).to(DEVICE)
+        reward_batch = torch.tensor(np.array(reward_batch), dtype=torch.float32).unsqueeze(1).to(DEVICE)
+        next_state_batch = torch.tensor(np.array(next_state_batch), dtype=torch.float32).to(DEVICE)
+        done_batch = torch.tensor(np.array(done_batch), dtype=torch.float32).unsqueeze(1).to(DEVICE)
+
+        with torch.no_grad():
+            self.dqn.eval() # don't use dropout when estimating targets
+            self.target_dqn.eval()
+            greedy_actions = self.dqn(next_state_batch).argmax(dim=1, keepdims=True)
+            q_value_targets = reward_batch + self.discount * ((1 - done_batch) * self.target_dqn(next_state_batch))
+            q_value_targets = q_value_targets.gather(1, greedy_actions)
+        
+        self.dqn.train()
+        q_value = self.dqn(state_batch)
+        q_value = q_value.gather(1, action_batch)
+
+        loss = self.criterion(q_value, q_value_targets)
+
+        self.optim.zero_grad()
+        loss.backward()
+        self.optim.step()
+
+    
+    def add_experience(self, state:dict, action:list, reward:float, done:bool):
+        self.replay_memory.add_experience(state, action, reward, done)    
 
     # Description: Updates the weights of the target network
     # Parameters: 	None

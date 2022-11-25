@@ -33,15 +33,14 @@ class HDDriveDQN(nn.Module):
     def forward(self, bev_Xs, front_Xs, acc_Xs, comp_Xs, gyro_Xs, vel_Xs):
         n_frames, b_size = bev_Xs.shape[0], bev_Xs.shape[1]
         hidden_states = []
-        dec_in = torch.zeros(n_frames, b_size, self.args.h_size, requires_grad=False, device=self.args.device)
+        dec_in = torch.zeros(1, b_size, self.args.h_size, requires_grad=False, device=self.args.device)
         for sensor_state in zip(bev_Xs, front_Xs, acc_Xs, comp_Xs, gyro_Xs, vel_Xs):
             # print(list(map(lambda x: x.shape, sensor_state)))
             bev_X_h, front_X_h, ego_X_h, vel_X_h = self.sensor_net(*sensor_state)
             sensor_X = torch.concat([bev_X_h, front_X_h, ego_X_h, vel_X_h], dim=0)
-            print(sensor_X.shape, dec_in.shape)
             hidden_state = self.fusion_net(sensor_X, dec_in)
             hidden_states.append(hidden_state)
-        
+
         hidden_states = torch.concat(hidden_states) # seqLen X batchSize X h_size 
         dec_in = torch.zeros(self.n_act_nets, b_size, self.args.h_size, requires_grad=False, device=self.args.device)
         hidden_state = self.temporal_net(hidden_states, dec_in).squeeze(0) # batchSize X h_size 

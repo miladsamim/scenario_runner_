@@ -1,8 +1,8 @@
 sensor_setup: hd_map
-image_width: 96
-image_height: 96
+image_width: 400
+image_height: 500
 visualize_sensors: 1
 external_visualizer: 1
 fill_buffer: 0
 file: test.json
-model_path: .\model_store\hd_map_96w_96h_
+model_path: .\model_store\hd_map_400w_500h_
