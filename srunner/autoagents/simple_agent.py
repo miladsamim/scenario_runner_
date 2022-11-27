@@ -147,10 +147,11 @@ class SimpleAgent(AutonomousAgent):
         """
         Cleanup
         """
-        if self._visualize_sensors:
-            self._display.quit_interface = True 
-        if self._external_visualizer:
-            self.visualizer.reset()
+        if self.hero_actor:
+            if self._visualize_sensors:
+                self._display.quit_interface = True 
+            if self._external_visualizer:
+                self.visualizer.reset()
 
 
 class Display(object):

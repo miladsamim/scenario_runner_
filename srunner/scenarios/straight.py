@@ -28,7 +28,7 @@ from srunner.scenariomanager.scenarioatomics.atomic_trigger_conditions import In
 from srunner.scenarios.basic_scenario import BasicScenario
 from srunner.tools.scenario_helper import get_waypoint_in_distance
 
-SECONDS_GIVEN_PER_METERS = 2 
+SECONDS_GIVEN_PER_METERS = .4 
 
 
 class StraightDriving(BasicScenario):
@@ -37,13 +37,13 @@ class StraightDriving(BasicScenario):
     timeout = 120
     
     def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True,
-                 timeout=600):
+                 timeout=600, draw_waypoints=False):
         self.timeout = timeout
         self._map = CarlaDataProvider.get_map()
         self._reference_waypoint = self._map.get_waypoint(config.trigger_points[0].location)
-        self._distance = 400
+        self._distance = 200
         
-        self._update_route(world, config, debug_mode)
+        self._update_route(world, config, debug_mode, draw_waypoints)
         
         super(StraightDriving, self).__init__("Straight",
                                         ego_vehicles,
@@ -53,7 +53,7 @@ class StraightDriving(BasicScenario):
                                         criteria_enable=criteria_enable)
     
     # Agent Scenario Tool
-    def _update_route(self, world, config, debug_mode):
+    def _update_route(self, world, config, debug_mode, draw_waypoints):
         start_location = self._reference_waypoint.transform.location
         self.end_waypoint, _ = get_waypoint_in_distance(self._reference_waypoint, self._distance)
         end_location = self.end_waypoint.transform.location
@@ -68,7 +68,7 @@ class StraightDriving(BasicScenario):
         self.timeout = self._estimate_route_timeout()
 
         # Print route in debug mode
-        if debug_mode:
+        if debug_mode or draw_waypoints:
             self._draw_waypoints(world, self.route, vertical_shift=0.1, persistency=50000.0)
 
     # Agent Scenario Tool

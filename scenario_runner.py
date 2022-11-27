@@ -394,8 +394,9 @@ class ScenarioRunner(object):
                 scenario = scenario_class(self.world,
                                           self.ego_vehicles,
                                           config,
-                                          self._args.randomize,
-                                          self._args.debug)
+                                          randomize=self._args.randomize,
+                                          debug_mode=self._args.debug,
+                                          draw_waypoints=self._args.drawWaypoints)
         except Exception as exception:                  # pylint: disable=broad-except
             print("The scenario cannot be loaded")
             traceback.print_exc()

@@ -26,7 +26,8 @@ class HDDriveDQN(nn.Module):
             nn.Linear(args.h_size, args.act_brake_dim)
         )
         self.t_or_b_net = nn.Sequential(
-            nn.Linear(args.h_size, 2)
+            nn.Linear(args.h_size, 1),
+            nn.Sigmoid(),
         )
         self.n_act_nets = 4
 

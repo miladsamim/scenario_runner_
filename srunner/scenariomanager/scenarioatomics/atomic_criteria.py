@@ -1761,7 +1761,7 @@ class RouteCompletionTest(Criterion):
 
     def to_pickable(self):
         data = {'route_completed': 0}
-        if self.list_traffic_events:
+        if len(self.list_traffic_events) > 1:
             data['route_completed'] = self.list_traffic_events[-1].get_dict()['route_completed']
         return data 
 

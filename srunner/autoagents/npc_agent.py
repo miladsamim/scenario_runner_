@@ -107,7 +107,6 @@ class NpcAgent(AutonomousAgent):
             self.visualizer.render()
             return self._agent.run_step()
         
-
     def destroy(self):
         """
         Cleanup

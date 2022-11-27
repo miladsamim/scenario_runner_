@@ -197,7 +197,6 @@ class ScenarioManager(object):
             # Tick scenario
             self.scenario_tree.tick_once()
 
-
             if self._debug_mode:
                 print("\n")
                 py_trees.display.print_ascii_tree(self.scenario_tree, show_status=True)
@@ -209,6 +208,12 @@ class ScenarioManager(object):
         if self._sync_mode and self._running and self._watchdog.get_status():
             CarlaDataProvider.get_world().tick()
         
+        if not self._running: # prepare for clean up
+            self.icomm.send({'done': True}, dest=0, tag=2)
+            # if self.use_mpi:
+            #     self.icomm.Disconnect()
+            self.use_mpi = False 
+
         if self.use_mpi:
             # get state data 
             vehicle_agent = self._agent._agent
@@ -226,8 +231,6 @@ class ScenarioManager(object):
             }
             self.icomm.send(data, dest=0, tag=2)
 
-        if not self._running: # prepare for clean up
-            self.use_mpi = False 
 
     def process_criterias(self, criterias):
         data = {}
