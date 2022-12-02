@@ -182,11 +182,13 @@ class ScenarioManager(object):
 
             if self._agent is not None:
                 if self.use_mpi:
-                    with open('receive_action.txt', mode='w') as fp:
-                        fp.writelines(time.asctime())
-                        fp.writelines('\nAwaiting message')
+                    # with open('receive_action.txt', mode='w') as fp:
+                    #     fp.writelines(time.asctime())
+                    #     fp.writelines('\nAwaiting message')
                     data = self.icomm.recv(source=0, tag=MPI.ANY_TAG)
-                    ego_action = carla.VehicleControl(**data['action']) if data['action'] else carla.VehicleControl()
+                    use_npc = data['use_npc']
+                    npc_action = self._agent._agent.run_step(None,None,use_npc=use_npc)  # pylint: disable=not-callable
+                    ego_action = carla.VehicleControl(**data['action']) if not use_npc and data['action'] else npc_action
                     if data['reset']:
                         self._running = False     
                 else:
@@ -209,27 +211,30 @@ class ScenarioManager(object):
             CarlaDataProvider.get_world().tick()
         
         if not self._running: # prepare for clean up
-            self.icomm.send({'done': True}, dest=0, tag=2)
+            self.icomm.send({'done': True,
+                             'exception': False,
+                             'cleaned': True}, dest=0, tag=2)
             # if self.use_mpi:
             #     self.icomm.Disconnect()
             self.use_mpi = False 
 
-        if self.use_mpi:
+        if self._agent is not None and self.use_mpi:
             # get state data 
             vehicle_agent = self._agent._agent
             sensor_data = vehicle_agent.sensor_interface.get_data() 
-            # visualize if set
-            if (vehicle_agent, 'SimpleAgent') and (vehicle_agent._visualize_sensors or vehicle_agent._external_visualizer):
-                vehicle_agent.run_step(sensor_data,0)
             velocity = self.get_velocity(self.ego_vehicles[0])
             criterias = self.process_criterias(vehicle_agent.criterias)
-            data = {
+            self._agent._agent.run_step(sensor_data,None,use_npc=False) # trigger visualization
+            send_data = {
                 'sensor_data': sensor_data,
                 'criterias': criterias,
                 'velocity': velocity,
-                'done': not self._running
+                'done': not self._running,
+                'exception': False, 
+                'cleaned': False,
+                'npc_act': self.control_to_dict(ego_action) if data['use_npc'] else None 
             }
-            self.icomm.send(data, dest=0, tag=2)
+            self.icomm.send(send_data, dest=0, tag=2)
 
 
     def process_criterias(self, criterias):
@@ -242,6 +247,17 @@ class ScenarioManager(object):
             # elif criteria.name == 'InRouteTest':
             #     pass 
         return data 
+
+    def control_to_dict(self, vehicle_control):
+        return {
+        'steer': vehicle_control.steer,
+        'throttle': vehicle_control.throttle,
+        'brake': vehicle_control.brake,
+        'reverse': vehicle_control.reverse,
+        'hand_brake': vehicle_control.hand_brake,
+        'manual_gear_shift': vehicle_control.manual_gear_shift,
+        'gear': vehicle_control.gear,
+        }
 
     def get_velocity(self, ego_vehicle):
         velocity_vec = ego_vehicle.get_velocity()

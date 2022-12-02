@@ -15,6 +15,8 @@ from agents.navigation.basic_agent import BasicAgent
 from srunner.autoagents.autonomous_agent import AutonomousAgent
 from srunner.scenariomanager.carla_data_provider import CarlaDataProvider
 from srunner.scenariomanager.actorcontrols.visualizer import Visualizer
+from srunner.autoagents.sensor_config import SensorConfiguration
+from srunner.autoagents.sensor_display import Display
 
 
 class NpcAgent(AutonomousAgent):
@@ -41,6 +43,11 @@ class NpcAgent(AutonomousAgent):
             self._external_visualizer = bool(int(lines[4].split(" ")[1]))
             self._fill_buffer = bool(int(lines[5].split(" ")[1]))
 
+        self.sensor_config = SensorConfiguration(self.sensor_setup, self._width, self._height)
+        
+        if self._visualize_sensors:
+            self._display = Display(self._width, self._height, self.sensor_setup)  
+
     def setup_criterias(self, criterias):
         self.criterias = criterias 
 
@@ -61,14 +68,7 @@ class NpcAgent(AutonomousAgent):
              'id': 'LIDAR'}
         ]
         """
-        sensors = [
-                            {'type': 'sensor.other.gnss', 'x': 0.7, 'y': -0.4, 'z': 1.60, 'id': 'GPS'},
-                            {'type': 'sensor.other.imu', 'id': 'IMU'},
-                            {'id': 'front_rgb','type': 'sensor.camera.rgb', 'x':0, 'y': 0, 'z':2.2, 'pitch':0, 
-                                     'yaw': 0, 'roll':0, 'width': 300, 'height': 200, 'fov': 100,},
-                ]   
-
-        return sensors
+        return self.sensor_config.get_sensor_configuration()
 
     def _get_hero_actor(self):
         hero_actor = None
@@ -79,7 +79,7 @@ class NpcAgent(AutonomousAgent):
                 break
         return hero_actor
 
-    def run_step(self, input_data, timestamp):
+    def run_step(self, input_data, timestamp, use_npc=True):
         """
         Execute one step of navigation.
         """
@@ -104,12 +104,25 @@ class NpcAgent(AutonomousAgent):
                 print("Can not find")
             return carla.VehicleControl()
         else:
+            if input_data:
+                self._visualization(input_data)
+            if use_npc:
+                return self._agent.run_step()
+            else: 
+                return carla.VehicleControl()
+    
+    def _visualization(self, input_data):
+        if self._visualize_sensors:
+            self._display.run_interface(input_data)
+        if self._external_visualizer and self.hero_actor:
             self.visualizer.render()
-            return self._agent.run_step()
-        
+
     def destroy(self):
         """
         Cleanup
         """
         if self.hero_actor:
-            self.visualizer.reset()
+            if self._visualize_sensors:
+                self._display.quit_interface = True 
+            if self._external_visualizer:
+                self.visualizer.reset()

@@ -37,12 +37,11 @@ class StraightDriving(BasicScenario):
     timeout = 120
     
     def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True,
-                 timeout=600, draw_waypoints=False):
+                 timeout=600, distance=200, draw_waypoints=False):
         self.timeout = timeout
         self._map = CarlaDataProvider.get_map()
         self._reference_waypoint = self._map.get_waypoint(config.trigger_points[0].location)
-        self._distance = 200
-        
+        self._distance = distance
         self._update_route(world, config, debug_mode, draw_waypoints)
         
         super(StraightDriving, self).__init__("Straight",
@@ -123,15 +122,15 @@ class StraightDriving(BasicScenario):
                                color=carla.Color(255, 0, 0), life_time=persistency)
 
 
-    def _initialize_actors(self, config):
-        """
-        Custom initialization
-        """
-        end_waypoint = self.end_waypoint#, _ = get_waypoint_in_distance(self._reference_waypoint, self._distance)
-        end_transform = end_waypoint.transform
-        end_transform.location.z += 0.5
-        ego_vehicle = CarlaDataProvider.request_new_actor('vehicle.tesla.model3', end_transform)
-        self.other_actors.append(ego_vehicle)
+    # def _initialize_actors(self, config):
+    #     """
+    #     Custom initialization
+    #     """
+    #     end_waypoint = self.end_waypoint#, _ = get_waypoint_in_distance(self._reference_waypoint, self._distance)
+    #     end_transform = end_waypoint.transform
+    #     end_transform.location.z += 0.5
+    #     ego_vehicle = CarlaDataProvider.request_new_actor('vehicle.tesla.model3', end_transform)
+    #     self.other_actors.append(ego_vehicle)
 
     def _create_behavior(self):
         """

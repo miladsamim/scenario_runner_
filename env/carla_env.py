@@ -5,7 +5,7 @@ import time
 import pickle 
 
 
-SCENARIO_SPAWNER = 'scenario_spawner.py'
+SCENARIO_SPAWNER = 'env/scenario_spawner.py'
 
 class CarlaEnv:
     comm = MPI.COMM_WORLD
@@ -17,15 +17,17 @@ class CarlaEnv:
         self.scenario_specification = scenario_specification
         self.icomm = None 
         self.agentConfig = agentConfig
-        if agentConfig:
-            self._setup_agent()
+        self.state_metrics = {}
     
+    def _set_scenario_spec(self, scenario_spec):
+        self.scenario_specification = scenario_spec
+
     def _run_scenario(self):
-        scenario_runner = None
-        result = True
+        self._setup_agent()
         self._setup_scenario()
         try:
-            print("Building scenario")
+            # print("Building scenario")
+            # print(MPI.Status)
             self.icomm = MPI.COMM_SELF.Spawn(sys.executable, args=[SCENARIO_SPAWNER], maxprocs=1, root=0)
             self.icomm.send(self.scenario_specification.copy(), dest=0, tag=11)
         except: 
@@ -36,11 +38,13 @@ class CarlaEnv:
         if self.scenario_specification.useMPI and self.icomm:
             # Await that existing scenario is cleaned up
             # self.icomm.send(data, dest=0, tag=1)
-            data = self.icomm.recv(source=0, tag=MPI.ANY_TAG)
-            print("Existing Scenario has been cleaned up", data)
+            # data = self.icomm.recv(source=0, tag=MPI.ANY_TAG)
+            self.icomm.Disconnect()
+            # self.icomm.Free()
+            # print("Existing Scenario has been cleaned up", data)
         self._run_scenario()
     
-    def step(self, action, additional=None):
+    def step(self, action, early_termination=False, use_npc=False):
         """Action is a dict array specifying a subset of:
            'throttle':  [0.0, 1.0]  (defalt: 0)
            'steer':     [-1.0, 1.0] (defalt: 0)
@@ -52,29 +56,34 @@ class CarlaEnv:
 
         # take action and receive s',r,d
         data = {'action': action,
-                'reset': False} # reset should be determined from here, from reward computations
+                'reset': early_termination, 
+                'use_npc': use_npc} 
         data = self.icomm.sendrecv(data, dest=0, sendtag=2, source=0, recvtag=MPI.ANY_TAG)
         done = data['done']
+        terminated = data['exception'] or data['cleaned']
         state = reward = None
-        if not done:
+        if not terminated:
             sensor_data = data['sensor_data']
             criterias = data['criterias']
             velocity = data['velocity']
             reward = self._compute_reward(criterias)
             state = self._process_state(sensor_data, velocity)
+            self.state_metrics['npc_act'] = data['npc_act']
+            # print(data['npc_act'])
             # print(sensor_data.keys())
             # print(sensor_data)
             # print(criterias)
+            # print(reward)
             # save dictionary to pickle file
-            with open('state.pickle', 'wb') as fp:
-                pickle.dump(state, fp, protocol=pickle.HIGHEST_PROTOCOL)
-            with open('trainer_receive.txt', mode='w') as fp:
-                fp.writelines(time.asctime()+'\n')
-                fp.writelines(f'Done: {str(done)}\n')
-                fp.writelines(f'Velocity: {velocity}\n')
+            # with open('state.pickle', 'wb') as fp:
+            #     pickle.dump(state, fp, protocol=pickle.HIGHEST_PROTOCOL)
+            # with open('trainer_receive.txt', mode='w') as fp:
+            #     fp.writelines(time.asctime()+'\n')
+            #     fp.writelines(f'Done: {str(done)}\n')
+            #     fp.writelines(f'Velocity: {velocity}\n')
         # print(done)
 
-        return state, reward, done
+        return state, reward, done, self.state_metrics, terminated
 
     def _process_state(self, sensor_data, velocity):
         assert self.agentConfig.sensor_setup in ['hd_map', 'none']
@@ -94,9 +103,48 @@ class CarlaEnv:
             processed_data['front_rgb'] = flip(sensor_data['front_rgb'][1])/255.0
         
         return processed_data
+    
+    def _process_state_metrics(self, criterias):
+        state_metrics = {}
+        for name, data in criterias.items():
+            if name == 'RouteCompletionTest':
+                state_metrics['routeCompletionPer'] = data['route_completed']
+            elif name == 'CollisionTest':
+                state_metrics['collisionCount'] = data['count']
+                state_metrics['isCollided'] = data['collision']
+                state_metrics['collisionObjType'] = data['collisionData']['type'] if data['collision'] else None
+            elif name == 'OutsideRouteLanesTest':
+                state_metrics.update(data)
+            elif name == 'OffRoadTest':
+                state_metrics['isOffRoad'] = data['isOffRoad'] 
+                state_metrics['offRoadCount'] = data['count']
+                state_metrics['offRoadTime'] = data['offRoadTime']
+            elif name == 'ActorSpeedAboveThresholdTest':
+                state_metrics['isBlocked'] = data['blocked']
+                state_metrics['blockDuration'] = data['blockDuration']
+        self.state_metrics = state_metrics
 
+    meters_completed = 0
     def _compute_reward(self, criterias):
-        return -0.1  
+        self._process_state_metrics(criterias)
+        # NEG | base reward
+        base_reward = -0.1 # to motivate motion
+        # POS | route completion
+        new_meters_completed = self.state_metrics['routeCompletionMeters'] - self.meters_completed
+        self.meters_completed = self.state_metrics['routeCompletionMeters']
+        rc = 1*new_meters_completed
+        # NEG | wrong lane 
+        wl = 2*self.state_metrics['isWrongLane']
+        # NEG | collision 
+        c = 200*self.state_metrics['isCollided']
+        # NEG | deviation from lane center 
+        d = 1*self.state_metrics['distFromNearestRoadWP']
+        # NEG | off-road 
+        of = 10*self.state_metrics['isOffRoad']
+
+        reward = base_reward + rc - wl - c - d - of 
+        
+        return reward         
 
     def _setup_scenario(self):
         prev_path = self.scenario_specification.agentConfig

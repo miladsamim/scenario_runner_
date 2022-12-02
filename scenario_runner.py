@@ -396,6 +396,7 @@ class ScenarioRunner(object):
                                           config,
                                           randomize=self._args.randomize,
                                           debug_mode=self._args.debug,
+                                          distance=self._args.route_dist,
                                           draw_waypoints=self._args.drawWaypoints)
         except Exception as exception:                  # pylint: disable=broad-except
             print("The scenario cannot be loaded")
@@ -572,6 +573,8 @@ def main():
     parser.add_argument('--randomize', action="store_true", help='Scenario parameters are randomized')
     parser.add_argument('--repetitions', default=1, type=int, help='Number of scenario executions')
     parser.add_argument('--waitForEgo', action="store_true", help='Connect the scenario to an existing ego vehicle')
+    parser.add_argument('--drawWaypoints', action="store_true", help='Whether to draw waypoints')
+    parser.add_argument('--route_dist', type=int, default=None, help='Whether to draw waypoints')
 
     arguments = parser.parse_args()
     # pylint: enable=line-too-long

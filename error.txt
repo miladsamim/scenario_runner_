@@ -1,0 +1,28 @@
+No more scenarios .... Exiting
+Traceback (most recent call last):
+  File "scenario_spawner.py", line 18, in <module>
+    result = scenario_runner.run()
+  File "C:\Users\test\Documents\driving\rl_ad\scenario_runner_\scenario_runner.py", line 515, in run
+    result = self._run_scenarios()
+  File "C:\Users\test\Documents\driving\rl_ad\scenario_runner_\scenario_runner.py", line 455, in _run_scenarios
+    result = self._load_and_run_scenario(config)
+  File "C:\Users\test\Documents\driving\rl_ad\scenario_runner_\scenario_runner.py", line 357, in _load_and_run_scenario
+    if not self._load_and_wait_for_world(config.town, config.ego_vehicles):
+  File "C:\Users\test\Documents\driving\rl_ad\scenario_runner_\scenario_runner.py", line 309, in _load_and_wait_for_world
+    self.world = self.client.load_world(town)
+RuntimeError: time-out of 10000ms while waiting for the simulator, make sure the simulator is ready and connected to 127.0.0.1:2000
+Waiting for specification
+pygame 2.1.0 (SDL 2.0.16, Python 3.8.10)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+
+job aborted:
+[ranks] message
+
+[0] process exited without calling finalize
+
+---- error analysis -----
+
+[0] on DESKTOP-LHGNMH0
+C:\Users\test\Documents\driving\rl_ad\env\Scripts\python.exe ended prematurely and may have crashed. exit code 0xc0000409
+
+---- error analysis -----

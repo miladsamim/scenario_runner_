@@ -1087,7 +1087,7 @@ class OutsideRouteLanesTest(Criterion):
         optional (bool): If True, the result is not considered for an overall pass/fail result
     """
 
-    ALLOWED_OUT_DISTANCE = 1.3          # At least 0.5, due to the mini-shoulder between lanes and sidewalks
+    ALLOWED_OUT_DISTANCE = 0.5#1.3          # At least 0.5, due to the mini-shoulder between lanes and sidewalks
     MAX_ALLOWED_VEHICLE_ANGLE = 120.0   # Maximum angle between the yaw and waypoint lane
     MAX_ALLOWED_WAYPOINT_ANGLE = 150.0  # Maximum change between the yaw-lane angle between frames
     WINDOWS_SIZE = 3                    # Amount of additional waypoints checked (in case the first on fails)
@@ -1119,6 +1119,10 @@ class OutsideRouteLanesTest(Criterion):
         self._last_lane_id = None
         self._total_distance = 0
         self._wrong_distance = 0
+
+        # compute car's distance from center of the lanes
+        self.distance_from_wp = None 
+        self.lane_width = None 
 
     def update(self):
         """
@@ -1197,6 +1201,9 @@ class OutsideRouteLanesTest(Criterion):
             lane_width = current_driving_wp.lane_width
 
         self._outside_lane_active = bool(distance > (lane_width / 2 + self.ALLOWED_OUT_DISTANCE))
+        self.distance_from_wp = distance
+        self.lane_width = lane_width
+
 
     def _is_at_wrong_lane(self, location):
         """
@@ -1280,6 +1287,9 @@ class OutsideRouteLanesTest(Criterion):
             'isOutsideDrivingLanes': self._outside_lane_active,
             'wrongLaneCount': self.wrong_lane_count,
             'outsideDrivingLanesCount': self._outside_lane_count,
+            'distFromNearestRoadWP': self.distance_from_wp,
+            'laneWidth': self.lane_width,
+            'routeCompletionMeters': self._total_distance,
         }
         if not self._wrong_lane_active_prev and self._wrong_lane_active:
             self.wrong_lane_count += 1
@@ -1723,7 +1733,7 @@ class RouteCompletionTest(Criterion):
                 wp_dir = wp.transform.get_forward_vector()          # Waypoint's forward vector
                 wp_veh = location - ref_waypoint                    # vector waypoint - vehicle
                 dot_ve_wp = wp_veh.x * wp_dir.x + wp_veh.y * wp_dir.y + wp_veh.z * wp_dir.z
-
+                # can mark next k amount of waypoints, and only draw those perhaps
                 if dot_ve_wp > 0:
                     # good! segment completed!
                     self._current_index = index

@@ -3,7 +3,6 @@ import numpy as np
 import torch 
 import torch.nn as nn 
 import torch.nn.functional as F 
-from torch.utils.tensorboard import SummaryWriter
 
 import random 
 import os 
@@ -45,7 +44,7 @@ class DQN_Agent:
     # save model
 
     def __init__(self, architecture, architecture_args, batch_size, memory_capacity,
-                 num_frames, learning_rate=0.00025, discount=0.99, delta=1):
+                 num_frames, model_name, learning_rate=0.00025, discount=0.99, delta=1):
         # self.action_size = self.env.action_space_size
         self.steering_act_space = [-1.0, -0.8, -0.6, -0.4, -0.2, 0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
         self.throttle_act_space = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
@@ -59,10 +58,11 @@ class DQN_Agent:
         self.optim = torch.optim.Adam(self.dqn.parameters(), lr=self.learning_rate)
         # self.explore_rate = explore_rate()
         self.criterion = nn.HuberLoss()
-
-        self.model_path = os.path.dirname(os.path.realpath(__file__)) + '/model_store/' + self.get_model_name(architecture_args)
-        self.log_path = os.path.dirname(os.path.realpath(__file__)) + '/model_store/' + 'log/'
-        self.writer = SummaryWriter(self.log_path)
+        self.model_name = model_name
+        self.model_path = os.path.dirname(os.path.realpath(__file__)) + '\\model_store\\' 
+        with open(self.model_path + model_name + '_args.txt', 'w') as f: 
+            for key, value in architecture_args.items(): 
+                f.write('%s:%s\n' % (key, value))
 
         # Training parameters setup
         self.discount = discount
@@ -86,9 +86,28 @@ class DQN_Agent:
         self.update_fixed_target_weights()
 
     def save_model(self, path=None):
-        path = self.model_path if not path else path 
+        path = self.model_path + self.model_name + '.pt' if not path else path
         torch.save(self.dqn.state_dict(), path)
     
+    def real_to_space_idx(self, space, val, delta):
+       idx = len(space)-1
+       for i in range(len(space)):
+              if val - delta < space[i]:
+                     idx = i 
+                     break
+       return idx
+
+    def act_to_discrete_split(self, act, steer_delta=0.2/2, delta=0.1/2):
+        throttle_used = True if act['throttle'] > 0 else False 
+        steering_idx = self.real_to_space_idx(self.steering_act_space, act['steer'], steer_delta)
+        if throttle_used:
+            throttle_idx = self.real_to_space_idx(self.throttle_act_space, act['throttle'], delta)
+            brake_idx = 0
+        else: 
+            brake_idx = self.real_to_space_idx(self.brake_act_space, act['brake'], delta)
+            throttle_idx = 0
+        return [steering_idx, throttle_idx, brake_idx]
+
     # Description: Performs one step of batch gradient descent on the DDQN loss function. 
     # Parameters:
     # - alpha: Number, the learning rate 
@@ -212,12 +231,16 @@ class DQN_Agent:
                 return action_indicies, action 
 
     
-    def sample_split_action(self):
-        use_throttle = random.random() > 0.5 
+    def sample_split_action(self, accelerated=False):        
+        use_throttle = random.random() > 0.2 
         steering_act = random.choice(range(len(self.steering_act_space)))
         throttle_act = random.choice(range(len(self.throttle_act_space))) if use_throttle else 0
         brake_act = random.choice(range(len(self.brake_act_space))) if not use_throttle else 0
         
+        if accelerated:
+            throttle_act = random.choice(range(6, len(self.throttle_act_space))) # 0.6 -1 
+            brake_act = 0 # 0
+
         action_indicies = [steering_act, throttle_act, brake_act]
         action = {
                 'steer': self.steering_act_space[steering_act],

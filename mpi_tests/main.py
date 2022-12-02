@@ -13,20 +13,29 @@ script = 'child.py'
 
 icomms = []
 
-d = {'sensor data': np.random.rand(4,32,16,16,3),
+d = {'sensor data': np.zeros((4,32,16,16,3)),
      'stats': 'stats',
      'other': [1,2,3,4]}
-try:
-    print('Trying to spawn child process...')
-    icomm = MPI.COMM_SELF.Spawn(sys.executable, args=[script], maxprocs=1, root=0)
-    time.sleep(10)
-    icomm.send(d, dest=0, tag=11)
-    print("Sleeping for 10 secs")
-    icomms.append(icomm)
-    print('Spawned a child.')
-except: 
-    ValueError('Spawn failed to start.')
- 
-msg = icomms[0].recv(source=0, tag=MPI.ANY_TAG)
-print("Parent received from child", msg.shape)
-icomms[0].Disconnect()
+for i in range(100):
+    try:
+        print('Trying to spawn child process...')
+        icomm = MPI.COMM_SELF.Spawn(sys.executable, args=[script], maxprocs=1, root=0)
+        # time.sleep(10)
+        icomm.send(d, dest=0, tag=11)
+        print("Sleeping for 10 secs")
+        icomms.append(icomm)
+        req = icomm.recv(source=0, tag=MPI.ANY_TAG)
+        data = req
+        print("Parent received from child", data)
+        # time.sleep(1)
+        icomm.Disconnect()
+        print('Spawned a child.')
+    except: 
+        ValueError('Spawn failed to start.')
+
+data = None#np.empty((4,32,16,16,4), dtype=np.float64)
+# data = {}
+# data = req.wait()
+# data = req.wait()
+print(MPI.Status)
+MPI.Finalize()

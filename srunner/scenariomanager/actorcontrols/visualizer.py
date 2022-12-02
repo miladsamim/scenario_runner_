@@ -184,13 +184,24 @@ class Visualizer(object):
             return ''
 
     def get_outside_route_lane_text(self, criteria):
-        if criteria._outside_lane_active and criteria._wrong_lane_active:
-            return  'Outside driving lanes + At the wrong lane'
+        data = criteria.to_pickable() # update counters
+        wrongLaneCount = data['wrongLaneCount']
+        outsideDrivingLanesCount = data['outsideDrivingLanesCount']
+        distFromNearestRoadWP = data['distFromNearestRoadWP']
+        routeCompletionMeters = data['routeCompletionMeters']
+        base_text = ''
+        if data['isWrongLane'] and data['isOutsideDrivingLanes']:
+            base_text += 'Outside driving lanes + At the wrong lane'
         elif criteria._outside_lane_active:
-            return  'Outside driving lanes'
+            base_text += 'Outside driving lanes'
         elif criteria._wrong_lane_active:
-            return 'At the wrong lane'
-        return ''
+            base_text += 'At the wrong lane'
+        
+        base_text += f' | wLCount: {wrongLaneCount} '
+        base_text += f' | ofCount: {outsideDrivingLanesCount} '
+        base_text += f' | distFromNearestRoadWp: {distFromNearestRoadWP:.2f} '
+        base_text += f' | routeCompletionMeters: {routeCompletionMeters:.2f} '
+        return base_text
 
     def get_actor_speed_limit_text(self, criteria):
         if criteria.test_status == 'FAILURE':
