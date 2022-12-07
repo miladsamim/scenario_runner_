@@ -5,21 +5,23 @@ import torch.nn.functional as F
 from . import PositionalEncoding
 
 class HDMapSensorDQN(nn.Module):
-    def __init__(self, in_shape, ego_dim, h_size=128, p=0.5):
-        super(HDMapSensorDQN, self).__init__()
+    def __init__(self, in_shape, ego_dim, args, h_size=128, p=0.5):
+        super().__init__()
         in_channels = in_shape[0]
         self.bev_cnn = build_cnn(in_channels, p=p)
         # Assume images are 3X96X96
         assert self._cnn_out_dim(in_shape) == 2304
-        self.bev_dense = build_cnn_to_dense(2304, h_size)
+        self.bev_dense = build_cnn_to_dense(2304, args.h_size)
         self.front_cnn = build_cnn(in_channels, p=p)
-        self.front_dense = build_cnn_to_dense(2304, h_size)
+        self.front_dense = build_cnn_to_dense(2304, args.h_size)
         self.ego_dense = nn.Sequential(
                             nn.Linear(ego_dim, 64),
                             nn.ReLU(),
-                            nn.Linear(64, h_size),
+                            nn.Linear(64, args.h_size),
                             nn.ReLU(),
                         )
+        self.emb = nn.Embedding(1, h_size, device=args.device)
+        self.emb.weight.requires_grad = False
 
         # Assume max speed 500 km/h
         self.positional_encoder = PositionalEncoding(h_size, max_len=500)
@@ -32,7 +34,8 @@ class HDMapSensorDQN(nn.Module):
         bev_X = self.bev_dense(self.bev_cnn(bev_X)).unsqueeze(dim=0)
         front_X = self.bev_dense(self.bev_cnn(front_X)).unsqueeze(dim=0)
         ego_X = self.ego_dense(torch.concat([acc_X, comp_X, gyro_X], dim=1)).unsqueeze(dim=0)
-        vel_X = self.positional_encoder.pe[vel_X.to(torch.long)].transpose(0,1)
+        vel_X_temp = self.positional_encoder.pe[vel_X.to(torch.long)].transpose(0,1)
+        vel_X = vel_X_temp + self.emb(torch.zeros_like(vel_X).long())
         return bev_X, front_X, ego_X, vel_X
 
 def GetPadConfig(input_size, pad_mode, pad_left, pad_right, kernel, stride):

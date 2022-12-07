@@ -33,7 +33,7 @@ scenario_args.repetitions = 1
 scenario_args.waitForEgo = False
 scenario_args.is_learner = True  
 scenario_args.useMPI = True
-scenario_args.drawWaypoints = True
+scenario_args.numOfWPs = 75 # number of waypoints to draw in front of car
 scenario_args.route_dist = 200
 scenario_args.raise_excep = False
 
@@ -50,12 +50,14 @@ agent_config = dotdict({
 exp_args = dotdict()
 exp_args.BATCH_SZ = 32 # batch size for replay training
 exp_args.REPLARY_MEM_SZ = 15_000 # size of the buffer to store (s,a,r,s') tuples
-exp_args.NUM_FRAMES = 4  # number of temporal frames the model should use
+exp_args.NUM_FRAMES = 16  # number of temporal frames the model should use
 exp_args.START_STEP = 0 # to restart from previous crash point
-exp_args.NUM_STEPS = 200_000 # number of steps/frames to train on
-exp_args.MODEL_NAME = 'hd_1'
+exp_args.NUM_STEPS = 3_000_000 # number of steps/frames to train on
+exp_args.MODEL_NAME = 'hd_1_simple_16f'
+exp_args.TARGET_UPDATE_FREQ = 1000 # frequency in steps/frames to update target model weights 
 exp_args.LOAD_MODEL = True
 exp_args.TEST = False
+exp_args.TEST_EVERY = 10 # test every 10'th episode
 
 model = HDDriveDQN
 model_args = hd_net_args

@@ -37,12 +37,13 @@ class StraightDriving(BasicScenario):
     timeout = 120
     
     def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True,
-                 timeout=600, distance=200, draw_waypoints=False):
+                 timeout=600, distance=200, num_of_wps=0):
         self.timeout = timeout
         self._map = CarlaDataProvider.get_map()
         self._reference_waypoint = self._map.get_waypoint(config.trigger_points[0].location)
         self._distance = distance
-        self._update_route(world, config, debug_mode, draw_waypoints)
+        self._update_route(world, config, debug_mode)
+        self.num_of_wps = num_of_wps
         
         super(StraightDriving, self).__init__("Straight",
                                         ego_vehicles,
@@ -52,7 +53,7 @@ class StraightDriving(BasicScenario):
                                         criteria_enable=criteria_enable)
     
     # Agent Scenario Tool
-    def _update_route(self, world, config, debug_mode, draw_waypoints):
+    def _update_route(self, world, config, debug_mode):
         start_location = self._reference_waypoint.transform.location
         self.end_waypoint, _ = get_waypoint_in_distance(self._reference_waypoint, self._distance)
         end_location = self.end_waypoint.transform.location
@@ -67,7 +68,7 @@ class StraightDriving(BasicScenario):
         self.timeout = self._estimate_route_timeout()
 
         # Print route in debug mode
-        if debug_mode or draw_waypoints:
+        if debug_mode:
             self._draw_waypoints(world, self.route, vertical_shift=0.1, persistency=50000.0)
 
     # Agent Scenario Tool
@@ -179,7 +180,8 @@ class StraightDriving(BasicScenario):
                                       offroad_max=30,
                                       terminate_on_failure=False)
 
-        completion_criterion = RouteCompletionTest(self.ego_vehicles[0], route=route)
+        completion_criterion = RouteCompletionTest(self.ego_vehicles[0], route=route, 
+                                                   num_of_wps_to_draw=self.num_of_wps)
 
         outsidelane_criterion = OutsideRouteLanesTest(self.ego_vehicles[0], 
                                                       route, 

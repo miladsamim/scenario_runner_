@@ -10,11 +10,24 @@ from timeit import default_timer as timer
 
 from . import MemoryBufferSimple
 
-DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 EVAL_FREQ=25
 SAVE_FREQ=100
 
 class DQN_Agent:
+
+    # 35 discrete actions
+    # steer in (-0.6, 0.3, 0.0, 0.3 0.6) | throttle/brake in (0.0, 0.3, 0.6, 0.9) 
+    action_space = [[0.0,  0, 0.0],
+                    [-0.6, 0.3, 0], [-0.6, 0.6, 0], [-0.6, 0.9, 0],
+                    [-0.3, 0.3, 0], [-0.3, 0.6, 0], [-0.3, 0.9, 0],
+                    [ 0.0, 0.3, 0], [ 0.0, 0.6, 0], [ 0.0, 0.9, 0],
+                    [ 0.3, 0.3, 0], [ 0.3, 0.6, 0], [ 0.3, 0.9, 0],
+                    [ 0.6, 0.3, 0], [ 0.6, 0.6, 0], [ 0.6, 0.9, 0],
+
+                    [-0.6, 0, 0.3], [-0.3, 0, 0.3], [ 0.0, 0, 0.3], [ 0.3, 0, 0.3],
+                    [ 0.6, 0, 0.3], [-0.6, 0, 0.6], [-0.3, 0, 0.6], [ 0.0, 0, 0.6],
+                    [ 0.3, 0, 0.6], [ 0.6, 0, 0.6], [-0.6, 0, 0.9], [-0.3, 0, 0.9],
+                    [ 0.0, 0, 0.9], [ 0.3, 0, 0.9], [ 0.6, 0, 0.9]]
 
 	# Description: Initializes the DQN_Agent object
 	# Parameters:
@@ -50,12 +63,13 @@ class DQN_Agent:
         self.throttle_act_space = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
         self.brake_act_space = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
         self.avg_reward = None
-        architecture_args.device = DEVICE
-        self.dqn = architecture(architecture_args).to(DEVICE)
-        self.target_dqn = architecture(architecture_args).to(DEVICE)
+        self.device = architecture_args.device
+        self.dqn = architecture(architecture_args).to(self.device)
+        self.target_dqn = architecture(architecture_args).to(self.device)
         self.update_fixed_target_weights()
         self.learning_rate = learning_rate # 0.00025# learning_rate() # atari learning rate
-        self.optim = torch.optim.Adam(self.dqn.parameters(), lr=self.learning_rate)
+        parameters = [ param for param in self.dqn.parameters() if param.requires_grad == True]
+        self.optim = torch.optim.Adam(parameters, lr=self.learning_rate)
         # self.explore_rate = explore_rate()
         self.criterion = nn.HuberLoss()
         self.model_name = model_name
@@ -113,25 +127,29 @@ class DQN_Agent:
     # - alpha: Number, the learning rate 
     # Output: None
     def experience_replay(self):
-        batch_X = next(iter(self.replay_memory_sampler))
-        
-        state_batch, action_batch, reward_batch, next_state_batch, done_batch = self.replay_memory.get_mini_batch(self.training_metadata)
-        state_batch = torch.tensor(np.array(state_batch), dtype=torch.float32).to(DEVICE)
-        action_batch = torch.tensor(np.array(action_batch), dtype=torch.int64).argmax(dim=1,keepdim=True).to(DEVICE)
-        reward_batch = torch.tensor(np.array(reward_batch), dtype=torch.float32).unsqueeze(1).to(DEVICE)
-        next_state_batch = torch.tensor(np.array(next_state_batch), dtype=torch.float32).to(DEVICE)
-        done_batch = torch.tensor(np.array(done_batch), dtype=torch.float32).unsqueeze(1).to(DEVICE)
+        states, actions, rewards, dones = next(iter(self.replay_memory_sampler))
+        # flip seq to be at axis 0 and batch samples at axis 1
+        for i, state_sensor in enumerate(states): 
+            states[i] = state_sensor.transpose_(0,1).to(self.device) # in place transpose
+        actions = actions.unsqueeze(-1).to(self.device)
+        rewards = rewards.unsqueeze(1).to(self.device)
+        dones = dones.unsqueeze(1).to(self.device)
+
+        # the 0...n-1 frames marks the current state (t-num_frames,...,t-1,t)
+        cur_states = [states_sensor[:-1] for states_sensor in states]
+        # 1...n frames marks the next (t+1-num_frames,...,t-1,t,t+1)
+        next_states = [states_sensor[1:] for states_sensor in states]
 
         with torch.no_grad():
             self.dqn.eval() # don't use dropout when estimating targets
             self.target_dqn.eval()
-            greedy_actions = self.dqn(next_state_batch).argmax(dim=1, keepdims=True)
-            q_value_targets = reward_batch + self.discount * ((1 - done_batch) * self.target_dqn(next_state_batch))
+            greedy_actions = self.dqn(*next_states).argmax(dim=1, keepdims=True)
+            q_value_targets = rewards + self.discount * ((1 - dones) * self.target_dqn(*next_states))
             q_value_targets = q_value_targets.gather(1, greedy_actions)
         
         self.dqn.train()
-        q_value = self.dqn(state_batch)
-        q_value = q_value.gather(1, action_batch)
+        q_value = self.dqn(*cur_states)
+        q_value = q_value.gather(1, actions)
 
         loss = self.criterion(q_value, q_value_targets)
 
@@ -147,10 +165,10 @@ class DQN_Agent:
         states, actions, rewards, dones = next(iter(self.replay_memory_sampler))
         # flip seq to be at axis 0 and batch samples at axis 1
         for i, state_sensor in enumerate(states): 
-            states[i] = state_sensor.transpose_(0,1).to(DEVICE) # in place transpose
-        actions = actions.unsqueeze(-1).to(DEVICE)
-        rewards = rewards.unsqueeze(1).to(DEVICE)
-        dones = dones.unsqueeze(1).to(DEVICE)
+            states[i] = state_sensor.transpose_(0,1).to(self.device) # in place transpose
+        actions = actions.unsqueeze(-1).to(self.device)
+        rewards = rewards.unsqueeze(1).to(self.device)
+        dones = dones.unsqueeze(1).to(self.device)
 
         # the 0...n-1 frames marks the current state (t-num_frames,...,t-1,t)
         cur_states = [states_sensor[:-1] for states_sensor in states]
@@ -203,6 +221,25 @@ class DQN_Agent:
     # - state: 		Tensor representing a single state
     # - epsilon: 	Number in (0,1)
     # Output: 		Integer in the range 0...self.action_size-1 representing an action
+    def get_action(self, state, epsilon, acc_rate=0.4):
+        """state: is a list of tuples of tensors which can be processed replay_memory._process_state"""
+        # Performing epsilon-greedy action selection
+        if random.random() < epsilon:
+            return self.sample_action(acc_rate=acc_rate)
+        else:
+            state = self.replay_memory._process_states(state)
+            temp = []
+            for state_sensor in state:
+                temp.append(state_sensor.unsqueeze(1).to(self.device))
+            state = temp
+            with torch.no_grad():
+                self.dqn.eval()
+                q_vals = self.dqn(*state)
+                act_idx = q_vals.argmax(dim=1).item()
+            action = self.act_idx_to_dict(act_idx)   
+            print(q_vals.detach().cpu())
+            return act_idx, action 
+
     def get_split_action(self, state, epsilon):
         """state: is a list of tuples of tensors which can be processed replay_memory._process_state"""
         # Performing epsilon-greedy action selection
@@ -212,7 +249,7 @@ class DQN_Agent:
             state = self.replay_memory._process_states(state)
             temp = []
             for state_sensor in state:
-                temp.append(state_sensor.unsqueeze(1).to(DEVICE))
+                temp.append(state_sensor.unsqueeze(1).to(self.device))
             state = temp
             with torch.no_grad():
                 self.dqn.eval()
@@ -230,7 +267,19 @@ class DQN_Agent:
                 } 
                 return action_indicies, action 
 
-    
+    def act_idx_to_dict(self, act_idx):
+        act_l = self.action_space[act_idx]
+        return {'steer': act_l[0], 'throttle': act_l[1], 'brake': act_l[2]}
+
+    def sample_action(self, acc_rate=0.4):        
+        use_throttle = random.random() < acc_rate
+        if use_throttle:
+            act_idx = random.choice([7,8,9]) # 7-9 -> throttle 0.3, 0.6, 0.9 
+        else:
+            act_idx = random.randint(0, len(self.action_space)-1)
+        action = self.act_idx_to_dict(act_idx) 
+        return act_idx, action 
+
     def sample_split_action(self, accelerated=False):        
         use_throttle = random.random() > 0.2 
         steering_act = random.choice(range(len(self.steering_act_space)))

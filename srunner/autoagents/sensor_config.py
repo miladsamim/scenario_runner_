@@ -17,7 +17,7 @@ class SensorConfiguration:
                                      'yaw': 0, 'roll':0, 'width':img_w, 'height':img_h, 'fov':100},
                        ]
         sensors_hd_map = base_sensors + [
-                            {'id': 'bev_sem','type': 'sensor.camera.semantic_segmentation', 'x':0, 'y': 0, 'z':40, 'pitch':-90, 
+                            {'id': 'bev_sem','type': 'sensor.camera.semantic_segmentation', 'x':0, 'y': 0, 'z':10, 'pitch':-90, 
                              'yaw': 0, 'roll':0, 'width':img_w, 'height':img_h, 'fov':100},
                          ]
 

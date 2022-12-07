@@ -23,6 +23,7 @@ import shapely.geometry
 
 import carla
 
+from agents.navigation.local_planner import RoadOption # from CARLA repo, for wp drawing
 from srunner.scenariomanager.carla_data_provider import CarlaDataProvider
 from srunner.scenariomanager.timer import GameTime
 from srunner.scenariomanager.traffic_events import TrafficEvent, TrafficEventType
@@ -1680,7 +1681,8 @@ class RouteCompletionTest(Criterion):
     DISTANCE_THRESHOLD = 10.0  # meters
     WINDOWS_SIZE = 2
 
-    def __init__(self, actor, route, name="RouteCompletionTest", terminate_on_failure=False):
+    def __init__(self, actor, route, name="RouteCompletionTest", 
+                 terminate_on_failure=False, num_of_wps_to_draw=0):
         """
         """
         super(RouteCompletionTest, self).__init__(name, actor, 100, terminate_on_failure=terminate_on_failure)
@@ -1688,11 +1690,13 @@ class RouteCompletionTest(Criterion):
         self._actor = actor
         self._route = route
         self._map = CarlaDataProvider.get_map()
+        self._world = CarlaDataProvider.get_world()
+        self.num_of_wps_to_draw = num_of_wps_to_draw
 
         self._wsize = self.WINDOWS_SIZE
         self._current_index = 0
         self._route_length = len(self._route)
-        self._waypoints, _ = zip(*self._route)
+        self._waypoints, self._road_options = zip(*self._route)
         self.target = self._waypoints[-1]
 
         self._accum_meters = []
@@ -1723,10 +1727,8 @@ class RouteCompletionTest(Criterion):
 
         if self._terminate_on_failure and (self.test_status == "FAILURE"):
             new_status = py_trees.common.Status.FAILURE
-
         elif self.test_status in ('RUNNING', 'INIT'):
-
-            for index in range(self._current_index, min(self._current_index + self._wsize + 1, self._route_length)):
+            for index in range(self._current_index, min(self._current_index + self._wsize, self._route_length)):
                 # Get the dot product to know if it has passed this location
                 ref_waypoint = self._waypoints[index]
                 wp = self._map.get_waypoint(ref_waypoint)
@@ -1744,6 +1746,21 @@ class RouteCompletionTest(Criterion):
                     self._traffic_event.set_message(
                         "Agent has completed > {:.2f}% of the route".format(
                             self._percentage_route_completed))
+                
+            # draw next k wp 
+            k = self.num_of_wps_to_draw
+            boundary = 5
+            draw_every = 5 
+            num_of_specials = 3
+            special_first_k = draw_every * num_of_specials
+            for index in range(self._current_index+boundary, min(self._current_index + k, self._route_length)):  
+                rel_idx = index - self._current_index
+                if index % draw_every == 0:
+                    size = 0.05 if rel_idx <= special_first_k else 0.02
+                    loc = ref_waypoint = self._waypoints[index]
+                    road_option = self._road_options[index]
+                    self._draw_waypoint(loc, road_option, size=size, vertical_shift=0.01, persistency=0.2)
+
 
             if self._percentage_route_completed > 99.0 and location.distance(self.target) < self.DISTANCE_THRESHOLD:
                 route_completion_event = TrafficEvent(event_type=TrafficEventType.ROUTE_COMPLETED)
@@ -1774,6 +1791,24 @@ class RouteCompletionTest(Criterion):
         if len(self.list_traffic_events) > 1:
             data['route_completed'] = self.list_traffic_events[-1].get_dict()['route_completed']
         return data 
+    
+    def _draw_waypoint(self, loc, road_option, size=0.03, vertical_shift=0.1, persistency=-1):
+        wp_loc = loc + carla.Location(z=vertical_shift)
+
+        if road_option == RoadOption.LEFT:  # Yellow
+            color = carla.Color(255, 255, 0)
+        elif road_option == RoadOption.RIGHT:  # Cyan
+            color = carla.Color(0, 255, 255)
+        elif road_option == RoadOption.CHANGELANELEFT:  # Orange
+            color = carla.Color(255, 64, 0)
+        elif road_option == RoadOption.CHANGELANERIGHT:  # Dark Cyan
+            color = carla.Color(0, 64, 255)
+        elif road_option == RoadOption.STRAIGHT:  # Gray
+            color = carla.Color(128, 128, 128)
+        else:  # LANEFOLLOW
+            color = carla.Color(0, 255, 0)  # Green
+
+        self._world.debug.draw_point(wp_loc, size=size, color=color, life_time=persistency)
 
 class RunningRedLightTest(Criterion):
 

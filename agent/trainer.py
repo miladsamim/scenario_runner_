@@ -1,8 +1,8 @@
 from env import CarlaEnv
-from agent import DQN_Agent, Decay_Explore_Rate
-from model import HDDriveDQN, hd_net_args
+from agent import DQN_Agent
 from srunner.tools import dotdict
 import random
+from timeit import default_timer as timer 
 from torch.utils.tensorboard import SummaryWriter
 import os
 
@@ -13,7 +13,7 @@ class ScenarioSampler:
     def __init__(self, default_spec):
         self.default_spec = default_spec
         self.scenarios = ['StraightDriving_1', 'StraightDriving_2', 'StraightDriving_4']
-        self.npc_rate = 0.3 
+        self.npc_rate = 0
     
     def sample(self, test=False):
         scenario_spec = dotdict(self.default_spec.copy())
@@ -22,7 +22,8 @@ class ScenarioSampler:
             use_npc = False 
         else:
             use_npc = True if random.random() < self.npc_rate else False
-        return scenario_spec, use_npc
+        acc_rate = random.random() + 0.3 # rate of frequency when throttle-only actions are chosen
+        return scenario_spec, use_npc, acc_rate
 
 class Trainer:
     def __init__(self, scenario_specification, agentConfig, 
@@ -41,6 +42,7 @@ class Trainer:
             self.agent.load_model(self.agent.model_path + exp_args.MODEL_NAME + '.pt')
         self.metrics_path = os.path.join('agent', 'model_store')
         self.writer = SummaryWriter(os.path.join(self.metrics_path, 'log', 'TEST/' if exp_args.TEST else 'TRAIN/')) 
+        self.start_time = timer()
 
         self.env = self._build_env()
 
@@ -76,11 +78,16 @@ class Trainer:
             ep_offroad = 0 
             ep_rc_meters = 0
 
-            scenario_spec, use_npc = self.scenario_sampler.sample(test=exp_args.TEST)
+            test = True if ep_i % exp_args.TEST_EVERY == 0 else exp_args.TEST
+
+            scenario_spec, use_npc, acc_rate = self.scenario_sampler.sample(test=test)
             self.env._set_scenario_spec(scenario_spec)
             self.env.reset_env()
             
             state, reward, done, info, terminated = self.env.step(None, early_termination=False, use_npc=use_npc)
+            if terminated: # move to next ep on crash
+                continue
+            state['action_idx'] = 0 
             early_terminate = False 
             for i in range(exp_args.NUM_FRAMES):
                 state_frame_stack.append(state)
@@ -91,13 +98,16 @@ class Trainer:
                 # action = {'throttle':1.0}
                 if use_npc:
                     action = None 
+                    reward += 1 # add extra bonus 
                 else:
-                    eps = self.expore_rate.get(step, exp_args.NUM_STEPS) if not exp_args.TEST else 0
-                    action_idx, action = self.agent.get_split_action(state_frame_stack, epsilon=eps)
-                
+                    eps = self.expore_rate.get(step, exp_args.NUM_STEPS) if not test else 0
+                    action_idx, action = self.agent.get_action(state_frame_stack, epsilon=eps, acc_rate=acc_rate)
+
                 state, reward, done, info, terminated = self.env.step(action, early_terminate, use_npc=use_npc)
                 early_terminate = self._check_early_termination(info)
                 if not terminated: # the scenario have crashed or finished
+                    state['action_idx'] = action_idx
+                    print("Action: ", action_idx, action)
                     if use_npc: # convert npc action proper agent action 
                         action_idx = self.agent.act_to_discrete_split(info['npc_act'])
                     else: # don't log npc data
@@ -108,21 +118,28 @@ class Trainer:
                         ep_offroad = info['outsideDrivingLanesCount']
                         ep_rc_meters = info['routeCompletionMeters']
                         self.writer.add_scalar('Reward/step', reward, step)
-                        self.writer.add_scalar('Epsilon/step', eps, step)      
+                        self.writer.add_scalar('Epsilon/step', eps, step)  
+
+                    state_frame_stack.append(state)
                     self.agent.add_experience(state, action_idx, reward, done)
-                 
-                    if not exp_args.TEST and self.agent.replay_memory.__len__() > exp_args.BATCH_SZ: # train when buffer is larger than batch size
-                        self.agent.experience_replay_split_acts()
+                    if step % exp_args.TARGET_UPDATE_FREQ == 0:
+                        self.agent.update_fixed_target_weights()
+
+                    if not test and self.agent.replay_memory.__len__() > exp_args.BATCH_SZ: # train when buffer is larger than batch size
+                        self.agent.experience_replay()
 
 
             # log episode metrics 
             self.writer.add_scalar('Steps/ep', ep_steps, ep_i)
+            episode_end_time = timer() - self.start_time 
+            self.writer.add_scalar('Time', episode_end_time, ep_i)
             if not use_npc:
-                self.writer.add_scalar('Reward/ep', ep_reward, ep_i)
-                self.writer.add_scalar('ep_collisions', ep_collisions, ep_i)
-                self.writer.add_scalar('ep_wronglanes', ep_wronglanes, ep_i)
-                self.writer.add_scalar('ep_offroad', ep_offroad, ep_i)
-                self.writer.add_scalar('ep_rc_meters', ep_rc_meters, ep_i)
+                b_text = 'TEST/' if test else '' 
+                self.writer.add_scalar(b_text+'Reward/ep', ep_reward, ep_i)
+                self.writer.add_scalar(b_text+'ep_collisions', ep_collisions, ep_i)
+                self.writer.add_scalar(b_text+'ep_wronglanes', ep_wronglanes, ep_i)
+                self.writer.add_scalar(b_text+'ep_offroad', ep_offroad, ep_i)
+                self.writer.add_scalar(b_text+'ep_rc_meters', ep_rc_meters, ep_i)
             
             if not exp_args.TEST:
                 self.agent.save_model()

@@ -70,6 +70,7 @@ class CarlaEnv:
             state = self._process_state(sensor_data, velocity)
             self.state_metrics['npc_act'] = data['npc_act']
             # print(data['npc_act'])
+            # print("this is action", action)
             # print(sensor_data.keys())
             # print(sensor_data)
             # print(criterias)
@@ -132,15 +133,15 @@ class CarlaEnv:
         # POS | route completion
         new_meters_completed = self.state_metrics['routeCompletionMeters'] - self.meters_completed
         self.meters_completed = self.state_metrics['routeCompletionMeters']
-        rc = 1*new_meters_completed
+        rc = 5*new_meters_completed
         # NEG | wrong lane 
-        wl = 2*self.state_metrics['isWrongLane']
+        wl = 0.1*self.state_metrics['isWrongLane']
         # NEG | collision 
         c = 200*self.state_metrics['isCollided']
         # NEG | deviation from lane center 
         d = 1*self.state_metrics['distFromNearestRoadWP']
         # NEG | off-road 
-        of = 10*self.state_metrics['isOffRoad']
+        of = 0.5*self.state_metrics['isOffRoad']
 
         reward = base_reward + rc - wl - c - d - of 
         

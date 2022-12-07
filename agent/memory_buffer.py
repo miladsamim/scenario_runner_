@@ -22,7 +22,7 @@ class MemoryBufferSimple(torch.utils.data.Dataset):
     def add_experience(self, state:dict, action:list, reward:float, done:bool):
         """states are at t+1, so when get_item we have to select actions, rewards one forward
            state>dict: which can be processed by _process_states
-           action>list: of indicies which map to action for each respective action space
+           action>int: which maps to action value in action_space list 
            reward>float: float value representing reward r(s'|s,a)
            done>bool: whether the episode is terminated at current step. Influences the target update"""
         self.states.append(state)
@@ -37,7 +37,7 @@ class MemoryBufferSimple(torch.utils.data.Dataset):
     def _process_states(self, states):
         """This function should be passed into the class as it could depend on the
            sensor setup. This configuration works for the HDSensor setup."""
-        bev_x = []; front_x = []; acc_x = []; comp_x = []; gyr_x = []; vel_x = [];
+        bev_x = []; front_x = []; acc_x = []; comp_x = []; gyr_x = []; vel_x = []; act_x = [];
         for state in states:
             bev_x.append(self._np_img_to_tensor(state['hd_map']))
             front_x.append(self._np_img_to_tensor(state['front_rgb']))
@@ -45,6 +45,7 @@ class MemoryBufferSimple(torch.utils.data.Dataset):
             comp_x.append(torch.tensor(state['compass'], dtype=torch.float32))
             gyr_x.append(torch.tensor(state['gyroscope'], dtype=torch.float32))
             vel_x.append(torch.tensor(state['velocity'], dtype=torch.float32))
+            act_x.append(torch.tensor(state['action_idx'], dtype=torch.long))
 
         bev_x = torch.stack(bev_x)
         front_x = torch.stack(front_x)
@@ -52,8 +53,9 @@ class MemoryBufferSimple(torch.utils.data.Dataset):
         comp_x = torch.stack(comp_x)
         gyr_x = torch.stack(gyr_x)
         vel_x = torch.stack(vel_x)
+        act_x = torch.stack(act_x)
 
-        return bev_x, front_x, acc_x, comp_x, gyr_x, vel_x
+        return bev_x, front_x, acc_x, comp_x, gyr_x, vel_x, act_x
         
     def __getitem__(self, idx):
         end_idx = idx + self.num_frames + 1 # +1 as we need next state as well
