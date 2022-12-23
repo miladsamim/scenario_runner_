@@ -153,7 +153,7 @@ class StraightDriving(BasicScenario):
                                                     policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ALL)
         endcondition_part1 = InTriggerDistanceToLocation(actor=self.ego_vehicles[0],
                                                          target_location=end_transform.location,
-                                                         distance=10,
+                                                         distance=2,
                                                          name="FinalDistanceToEndPoint")
         endcondition.add_child(endcondition_part1)
 

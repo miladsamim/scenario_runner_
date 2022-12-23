@@ -13,11 +13,11 @@ class SensorConfiguration:
         base_sensors = [
                             {'type': 'sensor.other.gnss', 'x': 0.7, 'y': -0.4, 'z': 1.60, 'id': 'GPS'},
                             {'type': 'sensor.other.imu', 'id': 'IMU'},
-                            {'id': 'front_rgb','type': 'sensor.camera.rgb', 'x':0, 'y': 0, 'z':2.2, 'pitch':0, 
+                            {'id': 'front_sem','type': 'sensor.camera.semantic_segmentation', 'x':0, 'y': 0, 'z':2.2, 'pitch':0, 
                                      'yaw': 0, 'roll':0, 'width':img_w, 'height':img_h, 'fov':100},
                        ]
         sensors_hd_map = base_sensors + [
-                            {'id': 'bev_sem','type': 'sensor.camera.semantic_segmentation', 'x':0, 'y': 0, 'z':10, 'pitch':-90, 
+                            {'id': 'bev_sem','type': 'sensor.camera.semantic_segmentation', 'x':0, 'y': 0, 'z':7, 'pitch':-90, 
                              'yaw': 0, 'roll':0, 'width':img_w, 'height':img_h, 'fov':100},
                          ]
 

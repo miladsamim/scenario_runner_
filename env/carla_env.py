@@ -76,8 +76,8 @@ class CarlaEnv:
             # print(criterias)
             # print(reward)
             # save dictionary to pickle file
-            # with open('state.pickle', 'wb') as fp:
-            #     pickle.dump(state, fp, protocol=pickle.HIGHEST_PROTOCOL)
+            with open('state.pickle', 'wb') as fp:
+                pickle.dump(state, fp, protocol=pickle.HIGHEST_PROTOCOL)
             # with open('trainer_receive.txt', mode='w') as fp:
             #     fp.writelines(time.asctime()+'\n')
             #     fp.writelines(f'Done: {str(done)}\n')
@@ -101,7 +101,7 @@ class CarlaEnv:
 
         if self.agentConfig.sensor_setup == 'hd_map':
             processed_data['hd_map'] = flip(sensor_data['bev_sem'][1])/255.0
-            processed_data['front_rgb'] = flip(sensor_data['front_rgb'][1])/255.0
+            processed_data['front_sem'] = flip(sensor_data['front_sem'][1])/255.0
         
         return processed_data
     

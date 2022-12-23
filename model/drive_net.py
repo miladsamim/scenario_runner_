@@ -2,7 +2,31 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from . import HDMapSensorDQN, PositionalEncoding
+from . import HDMapSensorDQN, HDMapSensorDQN_V0, PositionalEncoding
+
+
+class HDDriveDQN_V0_GRU(nn.Module):
+    def __init__(self, args):
+        super().__init__()
+        self.args = args
+        self.sensor_net = HDMapSensorDQN_V0(args.img_shape, args.ego_dim, args)
+        self.temporal_net = nn.GRU(args.h_size*3, 3*args.h_size, num_layers=1)
+        self.out = nn.Linear(3*args.h_size, args.simple_space_dim)
+        self.residual = args.residual
+    
+    def forward(self, bev_Xs, front_Xs, acc_Xs, comp_Xs, gyro_Xs, vel_Xs, act_Xs):
+        hidden_states = []
+        for i, sensor_state in enumerate(zip(bev_Xs, front_Xs, acc_Xs, comp_Xs, gyro_Xs, vel_Xs)):
+            # print(list(map(lambda x: x.shape, sensor_state)))
+            state_h = self.sensor_net(*sensor_state)
+            hidden_states.append(state_h)
+        hidden_states = torch.stack(hidden_states, dim=0) # seqLen X batchSize X h_size 
+        out, h_n = self.temporal_net(hidden_states)
+        h_n = h_n[-1]
+        if self.residual:
+            h_n = h_n + state_h
+
+        return self.out(F.relu(h_n)) 
 
 class HDDriveDQN(nn.Module):
     def __init__(self, args):

@@ -61,7 +61,7 @@ class Display(object):
     
     def hd_map_layout(self, input_data):
         return np.concatenate([input_data['bev_sem'][1][:, :, -2::-1],
-                               input_data['front_rgb'][1][:,:, -2::-1]], axis=0)
+                               input_data['front_sem'][1][:,:, -2::-1]], axis=0)
         # return input_data['bev_sem'][1][:, :, -2::-1]
     
     def hd_map_frontal_layout(self, input_data):

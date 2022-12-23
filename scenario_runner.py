@@ -574,7 +574,7 @@ def main():
     parser.add_argument('--repetitions', default=1, type=int, help='Number of scenario executions')
     parser.add_argument('--waitForEgo', action="store_true", help='Connect the scenario to an existing ego vehicle')
     parser.add_argument('--numOfWPs', type=int, default=0, help='Whether to draw waypoints')
-    parser.add_argument('--route_dist', type=int, default=None, help='Whether to draw waypoints')
+    parser.add_argument('--route_dist', type=int, default=300, help='Whether to draw waypoints')
 
     arguments = parser.parse_args()
     # pylint: enable=line-too-long

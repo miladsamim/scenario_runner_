@@ -210,7 +210,7 @@ class ScenarioManager(object):
         if self._sync_mode and self._running and self._watchdog.get_status():
             CarlaDataProvider.get_world().tick()
         
-        if not self._running: # prepare for clean up
+        if not self._running and self.use_mpi: # prepare for clean up
             self.icomm.send({'done': True,
                              'exception': False,
                              'cleaned': True}, dest=0, tag=2)
