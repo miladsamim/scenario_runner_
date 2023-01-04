@@ -1,0 +1,7 @@
+idx,category,type,name,collisionCount,wrongLaneCount,outsideDrivingLanesCount,offRoadCount,routeCompletionPer
+0,straight,straight,PTESTStraight_1,1,1,1,1,75.47036850771202
+1,straight,straight,PTESTStraight_2,0,0,0,1,85.55301226971008
+2,curved,left_curved,TESTLeftCurved_1,0,0,0,0,75.90491248635658
+3,curved,left_curved,TESTLeftCurved_2,4,0,0,2,96.43028067717565
+4,curved,right_curved,TESTRightCurved_1,0,1,1,1,100.0
+5,curved,right_curved,TESTRightCurved_2,1,1,1,1,60.78189842744971

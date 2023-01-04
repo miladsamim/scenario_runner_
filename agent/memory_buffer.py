@@ -53,6 +53,12 @@ class MemoryBufferSeparated(torch.utils.data.Dataset):
         self.ep_lengths[-1] += 1 
         if self.memory_capacity < sum(self.ep_lengths):
             self.flush_experiences()
+        
+        # clean up
+        reward = 0.0 if not isinstance(reward, float) else reward
+        action = 0 if not isinstance(action, int) else action 
+        done = False if not isinstance(done, bool) else done
+        state = self._clean_state(state)
 
         self.ep_states[-1].append(state)
         self.ep_actions[-1].append(action)
@@ -69,6 +75,25 @@ class MemoryBufferSeparated(torch.utils.data.Dataset):
             self.ep_actions.popleft()
             self.ep_rewards.popleft()
             self.ep_dones.popleft()
+
+    def _clean_state(self, state):
+        state['hd_map'] = self._clean(state['hd_map'])
+        state['front_sem'] = self._clean(state['front_sem'])
+        state['accelerometer'] = self._clean(state['accelerometer'])
+        state['compass'] = self._clean(state['compass'])
+        state['gyroscope'] = self._clean(state['gyroscope'])
+        state['velocity'] = 0 if np.isnan(state['velocity']) else state['velocity']
+        state['action_idx'] = 0 if np.isnan(state['action_idx']) else state['action_idx']
+        return state
+
+
+
+    def _clean(self, np_arr):
+        if np.isnan(np_arr).any():
+            return np.zeros_like(np_arr)
+        else:
+            return np_arr
+
 
     def _process_states(self, states):
         """This function should be passed into the class as it could depend on the

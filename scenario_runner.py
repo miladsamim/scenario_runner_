@@ -396,7 +396,7 @@ class ScenarioRunner(object):
                                           config,
                                           randomize=self._args.randomize,
                                           debug_mode=self._args.debug,
-                                          distance=self._args.route_dist,
+                                          distance=config.distance,
                                           num_of_wps=self._args.numOfWPs)
         except Exception as exception:                  # pylint: disable=broad-except
             print("The scenario cannot be loaded")

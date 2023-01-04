@@ -9,23 +9,63 @@
         <ego_vehicle x="110" y="330.7" z="0.5" yaw="0" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
         <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
     </scenario>
-    <scenario name="StraightDriving_3" type="StraightDriving" town="Town03">
-        <ego_vehicle x="246" y="-20" z="0.5" yaw="-90" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
-        <weather cloudiness="0.1" precipitation="0" precipitation_deposits="0" wind_intensity="0.1" sun_azimuth_angle="0" sun_altitude_angle="80" />
-    </scenario>
     <scenario name="StraightDriving_4" type="StraightDriving" town="Town03">
         <ego_vehicle x="131" y="129" z="0.5" yaw="-180" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
         <weather cloudiness="0.1" precipitation="0" precipitation_deposits="0" wind_intensity="0.1" sun_azimuth_angle="0" sun_altitude_angle="80" />
     </scenario>
     <!--  LEFT CURVED -->
-    <scenario name="LeftCurved_1" type="StraightDriving" town="Town10HD">
-        <ego_vehicle x="-114" y="47" z="0.5" yaw="90" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+    <scenario name="LeftCurved_1" type="StraightDriving" town="Town03">
+        <ego_vehicle x="-35" y="-209" z="0.5" yaw="-178" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+        <weather cloudiness="0.1" precipitation="0" precipitation_deposits="0" wind_intensity="0.1" sun_azimuth_angle="0" sun_altitude_angle="80" />
+    </scenario>
+    <scenario name="LeftCurved_2" type="StraightDriving" town="Town03" distance="200">
+        <ego_vehicle x="150" y="207" z="3" yaw="0" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+        <weather cloudiness="0.1" precipitation="0" precipitation_deposits="0" wind_intensity="0.1" sun_azimuth_angle="0" sun_altitude_angle="80" />
+    </scenario>
+    <scenario name="LeftCurved_3" type="StraightDriving" town="Town03">
+        <ego_vehicle x="246" y="-20" z="0.5" yaw="-90" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
         <weather cloudiness="0.1" precipitation="0" precipitation_deposits="0" wind_intensity="0.1" sun_azimuth_angle="0" sun_altitude_angle="80" />
     </scenario>
     <!--  RIGHT CURVED -->
-    <scenario name="RightCurved_1" type="StraightDriving" town="Town10HD">
-        <ego_vehicle x="-71" y="128" z="0.5" yaw="-164" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+    <scenario name="RightCurved_1" type="StraightDriving" town="Town03" distance="150">
+        <ego_vehicle x="229" y="115" z="0.5" yaw="91" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+        <!-- <ego_vehicle x="228" y="130" z="0.5" yaw="90" model="vehicle.lincoln.mkz_2017" rolename="hero"/> -->
         <weather cloudiness="0.1" precipitation="0" precipitation_deposits="0" wind_intensity="0.1" sun_azimuth_angle="0" sun_altitude_angle="80" />
     </scenario>
+    <scenario name="RightCurved_2" type="StraightDriving" town="Town03" distance="100">
+        <ego_vehicle x="-74" y="-151" z="0.5" yaw="270" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+        <!-- <ego_vehicle x="228" y="130" z="0.5" yaw="90" model="vehicle.lincoln.mkz_2017" rolename="hero"/> -->
+        <weather cloudiness="0.1" precipitation="0" precipitation_deposits="0" wind_intensity="0.1" sun_azimuth_angle="0" sun_altitude_angle="80" />
+    </scenario>
+    <scenario name="RightCurved_3" type="StraightDriving" town="Town03" distance="100">
+        <ego_vehicle x="170" y="-194" z="0.5" yaw="0" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+        <!-- <ego_vehicle x="228" y="130" z="0.5" yaw="90" model="vehicle.lincoln.mkz_2017" rolename="hero"/> -->
+        <weather cloudiness="0.1" precipitation="0" precipitation_deposits="0" wind_intensity="0.1" sun_azimuth_angle="0" sun_altitude_angle="80" />
+    </scenario>
+    
+    <!--TEST TRACKS-->
+        <!-- STRAIGHT -->
+            <!-- <scenario name="TESTStraight_1" type="StraightDriving" town="Town10HD">
+                <ego_vehicle x="-114" y="47" z="0.5" yaw="90" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0.1" precipitation="0" precipitation_deposits="0" wind_intensity="0.1" sun_azimuth_angle="0" sun_altitude_angle="80" />
+            </scenario> -->
+        <!--  LEFT CURVED -->
+            <scenario name="TESTLeftCurved_1" type="StraightDriving" town="Town10HD">
+                <ego_vehicle x="-114" y="47" z="0.5" yaw="90" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0.1" precipitation="0" precipitation_deposits="0" wind_intensity="0.1" sun_azimuth_angle="0" sun_altitude_angle="80" />
+            </scenario>
+            <scenario name="TESTLeftCurved_2" type="StraightDriving" town="Town10HD" distance="185">
+                <ego_vehicle x="110" y="-5" z="0.5" yaw="-90" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0.1" precipitation="0" precipitation_deposits="0" wind_intensity="0.1" sun_azimuth_angle="0" sun_altitude_angle="80" />
+            </scenario>
+        <!--  RIGHT CURVED -->
+            <scenario name="TESTRightCurved_1" type="StraightDriving" town="Town10HD">
+                <ego_vehicle x="-71" y="128" z="0.5" yaw="-164" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0.1" precipitation="0" precipitation_deposits="0" wind_intensity="0.1" sun_azimuth_angle="0" sun_altitude_angle="80" />
+            </scenario>
+            <scenario name="TESTRightCurved_2" type="StraightDriving" town="Town10HD" distance="165">
+                <ego_vehicle x="-27" y="-58" z="0.5" yaw="0" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0.1" precipitation="0" precipitation_deposits="0" wind_intensity="0.1" sun_azimuth_angle="0" sun_altitude_angle="80" />
+            </scenario>
 
 </scenarios>

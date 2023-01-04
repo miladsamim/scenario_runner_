@@ -31,7 +31,7 @@ from srunner.tools.scenario_helper import get_waypoint_in_distance
 SECONDS_GIVEN_PER_METERS = .4 
 
 
-class StraightDriving(BasicScenario):
+class PointDriving(BasicScenario):
     """"""
 
     timeout = 120
@@ -41,11 +41,12 @@ class StraightDriving(BasicScenario):
         self.timeout = timeout
         self._map = CarlaDataProvider.get_map()
         self._reference_waypoint = self._map.get_waypoint(config.trigger_points[0].location)
+        print(config.end_transform)
         self._distance = distance if distance else 200
         self._update_route(world, config, debug_mode)
         self.num_of_wps = num_of_wps
         
-        super(StraightDriving, self).__init__("Straight",
+        super(PointDriving, self).__init__("Straight",
                                         ego_vehicles,
                                         config,
                                         world,
@@ -55,8 +56,8 @@ class StraightDriving(BasicScenario):
     # Agent Scenario Tool
     def _update_route(self, world, config, debug_mode):
         start_location = self._reference_waypoint.transform.location
-        self.end_waypoint, _ = get_waypoint_in_distance(self._reference_waypoint, self._distance)
-        end_location = self.end_waypoint.transform.location
+        end_location = config.end_transform.location
+        self.end_waypoint = self._map.get_waypoint(end_location)
         gps_route, route = self._get_routes(start_location, end_location)
         
         self.route = route 

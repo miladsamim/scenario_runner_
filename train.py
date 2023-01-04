@@ -50,18 +50,22 @@ agent_config = dotdict({
 exp_args = dotdict()
 exp_args.BATCH_SZ = 32 # batch size for replay training
 exp_args.REPLARY_MEM_SZ = 15_000 # size of the buffer to store (s,a,r,s') tuples
-exp_args.NUM_FRAMES = 16  # number of temporal frames the model should use
-exp_args.START_STEP = 0 # to restart from previous crash point
+exp_args.NUM_FRAMES = 8  # number of temporal frames the model should use
+exp_args.START_STEP = 400_000 # to restart from previous crash point
 exp_args.NUM_STEPS = 3_000_000 # number of steps/frames to train on
-exp_args.EXPLORE_STEPS = 250_000 # eps will decay from 1 towards .1 lineary from step 0 -> EXPLORE_STEPS
+exp_args.EXPLORE_STEPS = 1_000_000 # eps will decay from 1 towards .1 lineary from step 0 -> EXPLORE_STEPS
 exp_args.MODEL_NAME = 'hd_gru_8f'
 exp_args.TARGET_UPDATE_FREQ = 1000 # frequency in steps/frames to update target model weights 
-exp_args.LOAD_MODEL = False
+exp_args.STORE_DENSITY = 1 # store the model in the nearest STORE_DENSITY (episode number) indexed file, to avoid saving too many models
+exp_args.LOAD_MODEL = True
 exp_args.TEST = False
 exp_args.TEST_EVERY = 10 # test every 10'th episode
+exp_args.EVAL_ROUNDS = 5 # number of rounds per scenario to use for evaluation
+exp_args.EVAL = True # whether to execute evaluation to run testing regiment
 
 model = HDDriveDQN_V0_GRU
 model_args = hd_net_args
+model_args.n_frames = exp_args.NUM_FRAMES
 explore_rate = Decay_Explore_Rate
 
 if __name__ == '__main__':
@@ -69,7 +73,10 @@ if __name__ == '__main__':
         print("Starting training of agent")
         trainer = Trainer(scenario_args, agent_config, model, 
                           model_args, exp_args, explore_rate, debug=False)
-        trainer.train()
+        if exp_args.EVAL:
+            trainer.evaluate()
+        else:
+            trainer.train()
         scenario_args = trainer.scenario_specifications        
     finally:
         print("Disconnecting")

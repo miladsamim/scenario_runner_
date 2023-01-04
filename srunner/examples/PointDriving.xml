@@ -1,0 +1,184 @@
+<?xml version="1.0"?>
+<scenarios>
+    <!-- LEFT CURVED -->
+    <scenario name="PLeftCurved_1" type="PointDriving" town="Town03">
+        <ego_vehicle x="110" y="59" z="0.5" yaw="180" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+        <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+        <end_transform x="108" y ="63" z="0.5" yaw="0" />
+    </scenario>
+
+    <!-- 3-HEADED -->
+        <!-- 3-HEADED JUNCTION RIGHT -->
+            <scenario name="P3Right_1" type="PointDriving" town="Town05">
+                <ego_vehicle x="-237" y="-4" z="0.5" yaw="180" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+                <end_transform x="-265" y ="-40" z="0.5" yaw="20" />
+            </scenario>
+            <scenario name="P3Right_2" type="PointDriving" town="Town05">
+                <ego_vehicle x="-146" y="-135" z="0.5" yaw="0" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+                <end_transform x="-131" y ="-105" z="0.5" yaw="20" />
+            </scenario>
+            <scenario name="P3Right_3" type="PointDriving" town="Town05">
+                <ego_vehicle x="-120" y="-105" z="0.5" yaw="270" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+                <end_transform x="-52" y="-105" z="0.5" yaw="23" />
+            </scenario>
+            <scenario name="P3Right_4" type="PointDriving" town="Town04">
+                <ego_vehicle x="60" y="-214" z="0.5" yaw="-260" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+                <end_transform x="19" y="-174" z="0.5" yaw="32" />
+            </scenario>
+            <scenario name="P3Right_5" type="PointDriving" town="Town04">
+                <ego_vehicle x="128" y="-200" z="0.5" yaw="-260" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+                <end_transform x="100" y="-173" z="0.5" yaw="17" />
+            </scenario>
+
+        <!-- 3-HEADED JUNCTION STRAIGHT-->
+            <scenario name="P3Straight_1" type="PointDriving" town="Town05">
+                <ego_vehicle x="-146" y="-135" z="0.5" yaw="0" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+                <end_transform x="-55" y ="-105" z="0.5" yaw="4" />
+            </scenario>
+        <!-- 3-HEADED JUNCTION LEFT -->
+            <scenario name="P3Left_1" type="PointDriving" town="Town05">
+                <ego_vehicle x="-237" y="-4" z="0.5" yaw="180" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+                <end_transform x="-275" y ="37" z="0.5" yaw="20" />
+            </scenario>
+            <scenario name="P3Left_2" type="PointDriving" town="Town05">
+                <ego_vehicle x="-120" y="-105" z="0.5" yaw="270" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+                <end_transform x="-191" y="-103" z="0.5" yaw="23" />
+            </scenario>
+            <scenario name="P3Left_3" type="PointDriving" town="Town04">
+                <ego_vehicle x="60" y="-214" z="0.5" yaw="-260" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+                <end_transform x="95" y="-170" z="0.5" yaw="32" />
+            </scenario>
+            <scenario name="P3Left_4" type="PointDriving" town="Town04">
+                <ego_vehicle x="128" y="-200" z="0.5" yaw="-260" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+                <end_transform x="188" y="-170" z="0.5" yaw="17" />
+            </scenario>
+
+    <!-- 4-HEADED -->
+        <!-- 4-HEADED JUNCTION RIGHT -->
+            <scenario name="P4Right_1" type="PointDriving" town="Town03">
+                <ego_vehicle x="9" y="-100" z="0.5" yaw="-90" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+                <end_transform x="69" y ="-133" z="8.5" yaw="23" />
+            </scenario>
+            <scenario name="P4Right_2" type="PointDriving" town="Town03">
+                <ego_vehicle x="-101" y="136" z="0.5" yaw="0" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+                <end_transform x="-88" y="165" z="0" yaw="3" />
+            </scenario>   
+        <!-- 4-HEADED JUNCTION STRAIGHT -->
+            <scenario name="P4Straight_1" type="PointDriving" town="Town03">
+                <ego_vehicle x="9" y="-100" z="0.5" yaw="-90" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+                <end_transform x="10" y ="-176" z="0" yaw="21" />
+            </scenario>
+            <scenario name="P4Straight_2" type="PointDriving" town="Town03">
+                <ego_vehicle x="101" y="-205" z="0.5" yaw="180" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+                <end_transform x="24" y ="-207" z="0" yaw="4" />
+            </scenario>
+            <scenario name="P4Straight_3" type="PointDriving" town="Town03">
+                <ego_vehicle x="-4" y="-152" z="0.5" yaw="90" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+                <end_transform x="-6" y="-77" z="0" yaw="3" />
+            </scenario>   
+
+        <!-- 4-HEADED JUNCTION LEFT -->
+            <scenario name="P4Left_1" type="PointDriving" town="Town03">
+                <ego_vehicle x="9" y="-80" z="0.5" yaw="-90" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+                <end_transform x="-62" y ="-139" z="0" yaw="45" />
+            </scenario>
+            <scenario name="P4Left_2" type="PointDriving" town="Town03">
+                <ego_vehicle x="-4" y="-180" z="0.5" yaw="90" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+                <end_transform x="70" y="-133" z="8" yaw="31" />
+            </scenario>   
+        <!-- 4-HEADED JUNCTION Multi -->
+            <scenario name="P4LR_1" type="PointDriving" town="Town04">
+                <ego_vehicle x="70" y="-133" z="0.5" yaw="90" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+                <end_transform x="213" y ="-249" z="0" yaw="45" />
+            </scenario>
+            <scenario name="P4LR_2" type="PointDriving" town="Town04">
+                <ego_vehicle x="333" y="-250" z="0.5" yaw="180" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+                <end_transform x="284" y ="-169" z="0" yaw="13" />
+            </scenario>   
+    <!--TEST TRACKS-->
+        <!-- STRAIGHT -->
+            <scenario name="PTESTStraight_1" type="PointDriving" town="Town10HD">
+                <ego_vehicle x="-65" y="140" z="0.5" yaw="0" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0.1" precipitation="0" precipitation_deposits="0" wind_intensity="0.1" sun_azimuth_angle="0" sun_altitude_angle="80" />
+                <end_transform x="63" y ="141" z="0" yaw="0" />
+            </scenario>
+            <scenario name="PTESTStraight_2" type="PointDriving" town="Town10HD">
+                <ego_vehicle x="84" y="13" z="0.5" yaw="180" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0.1" precipitation="0" precipitation_deposits="0" wind_intensity="0.1" sun_azimuth_angle="0" sun_altitude_angle="80" />
+                <end_transform x="-28" y ="13" z="0" yaw="0" />
+            </scenario>
+        <!-- 3-HEADED JUNCTION RIGHT -->
+            <scenario name="PTEST3Right_1" type="PointDriving" town="Town10HD">
+                <ego_vehicle x="40" y="39" z="0.5" yaw="90" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0.1" precipitation="0" precipitation_deposits="0" wind_intensity="0.1" sun_azimuth_angle="0" sun_altitude_angle="80" />
+                <end_transform x="5" y ="66" z="0" yaw="0" />
+            </scenario>
+            <scenario name="PTEST3Right_2" type="PointDriving" town="Town10HD">
+                <ego_vehicle x="-42" y="-43" z="0.5" yaw="-90" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0.1" precipitation="0" precipitation_deposits="0" wind_intensity="0.1" sun_azimuth_angle="0" sun_altitude_angle="80" />
+                <end_transform x="-2" y ="-58" z="0" yaw="0" />
+            </scenario>
+        <!-- 3-HEADED JUNCTION LEFT -->
+            <scenario name="PTEST3Left_1" type="PointDriving" town="Town10HD">
+                <ego_vehicle x="40" y="39" z="0.5" yaw="90" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0.1" precipitation="0" precipitation_deposits="0" wind_intensity="0.1" sun_azimuth_angle="0" sun_altitude_angle="80" />
+                <end_transform x="86" y ="70" z="0" yaw="0" />
+            </scenario>
+            <scenario name="PTEST3Left_2" type="PointDriving" town="Town10HD">
+                <ego_vehicle x="-45" y="-42" z="0.5" yaw="-90" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0.1" precipitation="0" precipitation_deposits="0" wind_intensity="0.1" sun_azimuth_angle="0" sun_altitude_angle="80" />
+                <end_transform x="-99" y ="-57" z="0" yaw="0" />
+            </scenario>
+        <!-- 4-HEADED JUNCTION STRAIGHT -->
+            <scenario name="PTEST4Straight_1" type="PointDriving" town="Town10HD">
+                <ego_vehicle x="-89" y="24" z="0.5" yaw="0" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0.1" precipitation="0" precipitation_deposits="0" wind_intensity="0.1" sun_azimuth_angle="0" sun_altitude_angle="80" />
+                <end_transform x="2" y ="28" z="0" yaw="0" />
+            </scenario>
+            <scenario name="PTEST4Straight_2" type="PointDriving" town="Town10HD">
+                <ego_vehicle x="-52" y="-3" z="0.5" yaw="90" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0.1" precipitation="0" precipitation_deposits="0" wind_intensity="0.1" sun_azimuth_angle="0" sun_altitude_angle="80" />
+                <end_transform x="-52" y ="60" z="0" yaw="0" />
+            </scenario>
+        <!-- 4-HEADED JUNCTION RIGHT -->
+            <scenario name="PTEST4Right_1" type="PointDriving" town="Town10HD">
+                <ego_vehicle x="-89" y="24" z="0.5" yaw="0" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0.1" precipitation="0" precipitation_deposits="0" wind_intensity="0.1" sun_azimuth_angle="0" sun_altitude_angle="80" />
+                <end_transform x="-52" y ="60" z="0" yaw="0" />
+            </scenario>
+            <scenario name="PTEST4Right_2" type="PointDriving" town="Town10HD">
+                <ego_vehicle x="-52" y="-3" z="0.5" yaw="90" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0.1" precipitation="0" precipitation_deposits="0" wind_intensity="0.1" sun_azimuth_angle="0" sun_altitude_angle="80" />
+                <end_transform x="-87" y ="13" z="0" yaw="0" />
+            </scenario>
+        <!-- 4-HEADED JUNCTION LEFT -->
+            <scenario name="PTEST4Left_1" type="PointDriving" town="Town10HD">
+                <ego_vehicle x="-89" y="24" z="0.5" yaw="0" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0.1" precipitation="0" precipitation_deposits="0" wind_intensity="0.1" sun_azimuth_angle="0" sun_altitude_angle="80" />
+                <end_transform x="-42" y ="-42" z="0" yaw="0" />
+            </scenario>
+            <scenario name="PTEST4Left_2" type="PointDriving" town="Town10HD">
+                <ego_vehicle x="-49" y="-3" z="0.5" yaw="90" model="vehicle.lincoln.mkz_2017" rolename="hero"/>
+                <weather cloudiness="0.1" precipitation="0" precipitation_deposits="0" wind_intensity="0.1" sun_azimuth_angle="0" sun_altitude_angle="80" />
+                <end_transform x="2" y ="28" z="0" yaw="0" />
+            </scenario>
+</scenarios>

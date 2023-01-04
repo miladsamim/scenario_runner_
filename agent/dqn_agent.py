@@ -75,7 +75,7 @@ class DQN_Agent:
     # save model
 
     def __init__(self, architecture, architecture_args, batch_size, memory_capacity,
-                 num_frames, model_name, store_path, learning_rate=0.00025, discount=0.99, delta=1):
+                 num_frames, model_name, store_path, learning_rate=0.00025, discount=0.98, delta=1):
         self.steering_space = [-1,-0.825,-0.75,-0.625,-0.5,-0.375,-0.25, -0.125, 0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.825, 1]
         self.throttle_space = [0, 0.5, 1]
         self.brake_space = [0, 0.5, 1]
@@ -116,8 +116,12 @@ class DQN_Agent:
         self.dqn.load_state_dict(torch.load(path))
         self.update_fixed_target_weights()
 
-    def save_model(self, path=None):
-        path = os.path.join(self.model_path, self.model_name + '.pt') if not path else path
+    def save_model(self, model_id=None, special_path=None):
+        path = os.path.join(self.model_path, self.model_name) if not special_path else special_path
+        if model_id and not special_path:
+            path += f'_{model_id}.pt'
+        else:
+            path += '.pt'
         torch.save(self.dqn.state_dict(), path)
     
     def real_to_space_idx(self, space, val, delta):
@@ -162,7 +166,7 @@ class DQN_Agent:
         # print(x_act, x_act.shape)
         # print((actions == x_act[-1].unsqueeze(-1)).all())
         # for i in range(17):
-        #     if (actions == x_act[i].unsqueeze(-1)).all():
+        #     if (actions == x_act[i].unsque    eze(-1)).all():
         #         print(i, "MATCHES")
 
         # the 0...n-1 frames marks the current state (t-num_frames,...,t-1,t)
@@ -185,6 +189,8 @@ class DQN_Agent:
 
         self.optim.zero_grad()
         loss.backward()
+        # for param in self.dqn.parameters():
+        #     param.grad.data.clamp_(-1, 1)
         self.optim.step()
         
     # Description: Chooses action wrt an e-greedy policy. 
@@ -207,7 +213,9 @@ class DQN_Agent:
                 self.dqn.eval()
                 q_vals = self.dqn(*state)
                 act_idx = q_vals.argmax(dim=1).item()
+                print(q_vals.cpu(), act_idx)
             action = self.act_idx_to_dict(act_idx)   
+            print(action)
             return act_idx, action  
 
     def act_idx_to_dict(self, act_idx):

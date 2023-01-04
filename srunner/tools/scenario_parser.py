@@ -11,6 +11,7 @@ This module provides access to a scenario configuration parser
 
 import glob
 import os
+import carla
 import xml.etree.ElementTree as ET
 
 from srunner.scenarioconfigs.scenario_configuration import ScenarioConfiguration, ActorConfigurationData
@@ -65,6 +66,8 @@ class ScenarioConfigurationParser(object):
 
                 new_config = ScenarioConfiguration()
                 new_config.town = scenario.attrib.get('town', None)
+                distance = scenario.attrib.get('distance', None)
+                new_config.distance = int(distance) if distance else None 
                 new_config.name = scenario_config_name
                 new_config.type = scenario_config_type
                 new_config.other_actors = []
@@ -87,6 +90,11 @@ class ScenarioConfigurationParser(object):
                     new_config.ego_vehicles.append(ActorConfigurationData.parse_from_node(ego_vehicle, 'hero'))
                     new_config.trigger_points.append(new_config.ego_vehicles[-1].transform)
 
+                end_transform = None
+                for end_transform_node in scenario.iter("end_transform"):
+                    end_transform = new_config.parse_loc_node(end_transform_node)
+                new_config.end_transform = end_transform                
+
                 for route in scenario.iter("route"):
                     route_conf = RouteConfiguration()
                     route_conf.parse_xml(route)
@@ -97,7 +105,8 @@ class ScenarioConfigurationParser(object):
 
                 scenario_configurations.append(new_config)
 
-        return scenario_configurations
+        return scenario_configurations    
+
 
     @staticmethod
     def get_list_of_scenarios(config_file_name):

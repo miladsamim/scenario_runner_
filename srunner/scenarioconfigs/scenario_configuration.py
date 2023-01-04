@@ -84,3 +84,14 @@ class ScenarioConfiguration(object):
     friction = None
     subtype = None
     route_var_name = None
+    distance = None 
+    end_transform = None 
+    
+
+    def parse_loc_node(self, node):
+        pos_x = float(node.attrib.get('x', 0))
+        pos_y = float(node.attrib.get('y', 0))
+        pos_z = float(node.attrib.get('z', 0))
+        yaw = float(node.attrib.get('yaw', 0))
+        transform = carla.Transform(carla.Location(x=pos_x, y=pos_y, z=pos_z), carla.Rotation(yaw=yaw))
+        return transform

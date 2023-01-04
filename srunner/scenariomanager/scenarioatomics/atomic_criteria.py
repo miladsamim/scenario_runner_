@@ -1663,7 +1663,8 @@ class InRouteTest(Criterion):
                 'deviation_location': False
         }
         if self.list_traffic_events:
-            data['deviation_location'] = self.list_traffic_events[-1].get_dict()['route_completed']
+            d = self.list_traffic_events[-1].get_dict()
+            data['deviation_location'] = (d['x'], d['y'], d['z'])
             data['off_road'] = True 
         return data 
 
@@ -1787,9 +1788,7 @@ class RouteCompletionTest(Criterion):
         super(RouteCompletionTest, self).terminate(new_status)
 
     def to_pickable(self):
-        data = {'route_completed': 0}
-        if len(self.list_traffic_events) > 1:
-            data['route_completed'] = self.list_traffic_events[-1].get_dict()['route_completed']
+        data = {'route_completed': self._percentage_route_completed}
         return data 
     
     def _draw_waypoint(self, loc, road_option, size=0.03, vertical_shift=0.1, persistency=-1):

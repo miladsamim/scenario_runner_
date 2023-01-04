@@ -4,7 +4,6 @@ import sys
 import time
 import pickle 
 
-
 SCENARIO_SPAWNER = 'env/scenario_spawner.py'
 
 class CarlaEnv:
@@ -76,8 +75,8 @@ class CarlaEnv:
             # print(criterias)
             # print(reward)
             # save dictionary to pickle file
-            with open('state.pickle', 'wb') as fp:
-                pickle.dump(state, fp, protocol=pickle.HIGHEST_PROTOCOL)
+            # with open('state.pickle', 'wb') as fp:
+            #     pickle.dump(state, fp, protocol=pickle.HIGHEST_PROTOCOL)
             # with open('trainer_receive.txt', mode='w') as fp:
             #     fp.writelines(time.asctime()+'\n')
             #     fp.writelines(f'Done: {str(done)}\n')
@@ -117,7 +116,7 @@ class CarlaEnv:
             elif name == 'OutsideRouteLanesTest':
                 state_metrics.update(data)
             elif name == 'OffRoadTest':
-                state_metrics['isOffRoad'] = data['isOffRoad'] 
+                state_metrics['isOffRoad'] = data['isOffRoad']
                 state_metrics['offRoadCount'] = data['count']
                 state_metrics['offRoadTime'] = data['offRoadTime']
             elif name == 'ActorSpeedAboveThresholdTest':

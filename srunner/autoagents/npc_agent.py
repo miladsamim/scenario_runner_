@@ -27,6 +27,8 @@ class NpcAgent(AutonomousAgent):
 
     _agent = None
     _route_assigned = False
+    opt_dict = {}
+    opt_dict['ignore_traffic_lights'] = True
 
     def setup(self, path_to_conf_file):
         """
@@ -90,7 +92,7 @@ class NpcAgent(AutonomousAgent):
                 return carla.VehicleControl()
             # Add an agent that follows the route to the ego
             if self.hero_actor:
-                self._agent = BasicAgent(self.hero_actor, 30)
+                self._agent = BasicAgent(self.hero_actor, 30, opt_dict=self.opt_dict)
                 plan = []
                 prev_wp = None
                 for transform, _ in self._global_plan_world_coord:
