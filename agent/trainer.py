@@ -75,7 +75,7 @@ class ScenarioSampler:
 
     def __init__(self, default_spec, test_regiment=False):
         self.default_spec = default_spec
-        self.scenarios = self.leg3_scenarios
+        self.scenarios = ['PTEST4Right_1']#self.leg3_scenarios
         self.npc_rate = 0.25
         self.test_regiment = True 
 
@@ -103,8 +103,8 @@ class Trainer:
         self.scenario_specification.debug = debug 
         self.agentConfig = agentConfig
 
-        # self.model_name = model.__name__ + f'_{model_args.n_frames}f_' + f'{model_args.residual}res' + '_leg3'
-        self.model_name = model.__name__ + f'_{model_args.n_frames}f_' + f'{model_args.residual}res' + '_LEG3_JUNCTION'
+        self.model_name = model.__name__ + f'_{model_args.n_frames}f_' + f'{model_args.residual}res' + '_leg4'
+        # self.model_name = model.__name__ + f'_{model_args.n_frames}f_' + f'{model_args.residual}res' + '_LEG4_ALL'
 
         if exp_args.EVAL:
             self.model_store_path = os.path.join('agent', 'model_store', 'ORG')
@@ -119,7 +119,7 @@ class Trainer:
         self.expore_rate = explore_rate()
         if exp_args.LOAD_MODEL:
             print("Loaded existing model")
-            self.agent.load_model(os.path.join(self.agent.model_path,  self.model_name + '.pt'))
+            self.agent.load_model(os.path.join(self.agent.model_path,  self.model_name + '_128.pt'))
         self.env = self._build_env()
 
     def _prefill_buffer(self):
